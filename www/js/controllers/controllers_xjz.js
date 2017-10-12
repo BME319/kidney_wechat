@@ -1,7 +1,12 @@
 angular.module('xjz.controllers', ['ionic', 'kidney.services'])
-// 新建团队
+/**
+ * 新建团队
+ * @Author   xjz
+ * @DateTime 2017-07-05
+ */
 .controller('NewGroupCtrl', ['$scope', '$state', '$ionicLoading', '$rootScope', 'Communication', 'Storage', 'Doctor', '$filter', function ($scope, $state, $ionicLoading, $rootScope, Communication, Storage, Doctor, $filter) {
   $rootScope.newMember = []
+
   $scope.members = []
   $scope.team = {
     teamId: '',
@@ -10,10 +15,16 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
     sponsorName: '',
     description: ''
   }
+
   $scope.$on('$ionicView.beforeEnter', function () {
     $scope.members = $rootScope.newMember
   })
-
+  /**
+   * 确认新建按键
+   * @Author   xjz
+   * @DateTime 2017-07-05
+   * @return   {null}
+   */
   $scope.confirm = function () {
     if ($scope.team.name == '' || $scope.team.description == '') {
       $ionicLoading.show({ template: '请完整填写信息', duration: 1500 })
@@ -21,59 +32,100 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
       $ionicLoading.show({ template: '请至少添加一个成员', duration: 1500 })
     } else {
       upload()
-      $ionicLoading.show()
     }
   }
-
-  function upload () {
+  /**
+   * 上传新建团队信息
+   * @Author   xjz
+   * @DateTime 2017-07-05
+   * @param    {str}   gid   groupid
+   * @return   {null}
+   */
+  function upload (gid) {
     var time = new Date()
     $scope.team.teamId = $filter('date')(time, 'ssmsssH')
     $scope.team.sponsorId = Storage.get('UID')
-    Doctor.getDoctorInfo({ userId: $scope.team.sponsorId })
+    Doctor.doctor({ userId: $scope.team.sponsorId })
             .then(function (data) {
               $scope.team.sponsorName = data.results.name
               Communication.newTeam($scope.team)
                     .then(function (data) {
                         // add members
                       Communication.insertMember({ teamId: $scope.team.teamId, members: $rootScope.newMember })
-
-                      $ionicLoading.show({ template: '创建成功'})
-                      setTimeout(function () {
-                        $ionicLoading.hide()
-                        $state.go('tab.groups', { type: '0' })
-                      }, 1500)
+                            .then(function (data) {
+                              $ionicLoading.show({ template: '创建成功', duration: 1500 })
+                              setTimeout(function () {
+                                $state.go('tab.groups', { type: '0' })
+                              }, 1000)
+                            }, function (err) {
+                              console.log(err)
+                            })
                     }, function (err) {
                       $ionicLoading.show({ template: '创建失败', duration: 1500 })
                       console.log(err)
                     })
             })
   }
-
+  /**
+   * 跳转到添加人头页面按键
+   * @Author   xjz
+   * @DateTime 2017-07-05
+   */
   $scope.addMember = function () {
     $state.go('tab.group-add-member', { type: 'new' })
   }
 }])
-// 团队查找
-
-.controller('GroupsSearchCtrl', ['$scope', '$state', 'Communication', 'wechat', 'Storage', '$location', function ($scope, $state, Communication, wechat, Storage, $location) {
+/**
+ * 查找团队
+ * @Author   xjz
+ * @DateTime 2017-07-05
+ */
+.controller('GroupsSearchCtrl', ['$scope', '$state', 'Communication', '$ionicLoading', 'Mywechat', '$location', function ($scope, $state, Communication, $ionicLoading, Mywechat, $location) {
   $scope.search = ''
   $scope.noteam = 0
+  // $scope.searchStyle = {'margin-top': '44px'}
+  // if (ionic.Platform.isIOS()) {
+  //   $scope.searchStyle = {'margin-top': '64px'}
+  // }
+  /**
+   * 搜索群号
+   * @Author   xjz
+   * @DateTime 2017-07-05
+   */
   $scope.Searchgroup = function () {
+    $scope.noteam = 0
     Communication.getTeam({ teamId: $scope.search })
             .then(function (data) {
-              $scope.teamresult = data
-              if (data.length == 0) {
-                $ionicLoading.show({ template: '查无此群', duration: 1000 })
-              }
+              console.log(data.results)
+
+              if (data.results == null) {
+                $scope.noteam = 1
+                $ionicLoading.show({ template: '没有搜索到该群', duration: 1000 })
+              } else { $scope.teamresult = data }
             }, function (err) {
               console.log(err)
             })
   }
+  /**
+   * 扫团队二维码
+   * @Author   xjz
+   * @DateTime 2017-07-05
+   */
+  // $scope.QRscan = function () {
+  //   QRScan.getCode()
+  //       .then(function (teamId) {
+  //         if (teamId) {
+  //           $state.go('tab.group-add', {teamId: teamId})
+  //         }
+  //       }, function (err) {
+
+  //       })
+  // }
 
   $scope.QRscan = function () {
     var config = ''
     var path = $location.absUrl().split('#')[0]
-    wechat.settingConfig({url: path}).then(function (data) {
+    Mywechat.settingConfig({url: path}).then(function (data) {
       config = data.results
       config.jsApiList = ['scanQRCode']
       wx.config({
@@ -106,9 +158,21 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
 
     })
   }
+
 }])
-// 医生查找
+/**
+ * 查找医生
+ * @Author   xjz
+ * @DateTime 2017-07-05
+ */
 .controller('DoctorSearchCtrl', ['$scope', '$state', '$ionicHistory', 'arrTool', 'Communication', '$ionicLoading', '$rootScope', 'Patient', 'CONFIG', 'Storage', function ($scope, $state, $ionicHistory, arrTool, Communication, $ionicLoading, $rootScope, Patient, CONFIG, Storage) {
+  // $scope.searchStyle = {'margin-top': '44px'}
+  // if (ionic.Platform.isIOS()) {
+  //   $scope.searchStyle = {'margin-top': '64px'}
+  //   $scope.docStyle = {'margin-top': '20px'}
+  // }
+  // $scope.docStyle = {'margin-top': '0px'}
+
     // get groupId via $state.params.groupId
   $scope.moredata = true
   $scope.issearching = true
@@ -119,9 +183,17 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
   $scope.doctors = []
   $scope.alldoctors = []
   $scope.skipnum = 0
+  /**
+   * 下拉加载更多
+   * @Author   zyh
+   * @DateTime 2017-07-05
+   * @return   {null}
+   */
   $scope.loadMore = function () {
+        // $scope.$apply(function() {
     Patient.getDoctorLists({ skip: $scope.skipnum, limit: 10 })
             .then(function (data) {
+              console.log(data.results)
               $scope.$broadcast('scroll.infiniteScrollComplete')
 
               $scope.alldoctors = $scope.alldoctors.concat(data.results)
@@ -133,35 +205,64 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
             }, function (err) {
               console.log(err)
             })
+            // });
   }
+  /**
+   * “搜索”按钮
+   * @Author   zyh
+   * @DateTime 2017-07-05
+   * @return   {[type]}
+   */
   $scope.goSearch = function () {
     $scope.isnotsearching = true
     $scope.issearching = false
     $scope.moredata = false
     Patient.getDoctorLists({ skip: 0, limit: 10, name: $scope.search.name })
             .then(function (data) {
+              console.log(data.results)
               $scope.doctors = data.results
               if (data.results.length == 0) {
-                $ionicLoading.show({ template: '查无此人', duration: 1000 })
+                $ionicLoading.show({ template: '没有搜索到医生', duration: 1000 })
               }
             }, function (err) {
               console.log(err)
             })
   }
-  $scope.closeSearch = function () {
+
+    // directive <button-clear-input>新建了scope， 导致clearSearch不能正确bind，不能触发
+    // 影响使用体验
+    /**
+     * 清空输入圆形×
+     * @Author   zyh
+     * @DateTime 2017-07-05
+     * @return   {[type]}
+     */
+  $scope.clearSearch = function () {
+    $scope.search.name = ''
     $scope.issearching = true
     $scope.isnotsearching = false
     $scope.moredata = true
     $scope.doctors = $scope.alldoctors
   }
-
+  /**
+   * 点击医生触发事件
+   * @Author   xjz
+   * @DateTime 2017-07-05
+   * @param    {str}
+   * @return   {null}
+   */
   $scope.doctorClick = function (doc) {
     if (doc == Storage.get('UID')) $state.go('tab.me')
     else $state.go('tab.detail', { type: '2', chatId: doc })
   }
 }])
-// 我的团队
-.controller('groupsCtrl', ['$scope', '$http', '$state', '$ionicPopover', '$ionicScrollDelegate', 'Doctor', 'Storage', 'Patient', 'arrTool', '$q', 'wechat', '$location', 'New', '$interval', function ($scope, $http, $state, $ionicPopover, $ionicScrollDelegate, Doctor, Storage, Patient, arrTool, $q, wechat, $location, New, $interval) {
+
+/**
+ * (我的)团队页面
+ * @Author   xjz
+ * @DateTime 2017-07-05
+ */
+.controller('groupsCtrl', ['$scope', '$http', '$state', '$ionicPopover', 'Doctor', 'Storage', 'Patient', 'arrTool', '$q', 'New', '$interval', '$timeout', function ($scope, $http, $state, $ionicPopover, Doctor, Storage, Patient, arrTool, $q, New, $interval, $timeout) {
   $scope.countAllDoc = '?'
   $scope.query = {
     name: ''
@@ -171,15 +272,29 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
     showSearch: false,
     updateTime: 0
   }
+  /**
+   * 获取医生数量
+   * @Author   xjz
+   * @DateTime 2017-07-05
+   * @return   {[type]}
+   */
   var countDocs = function () {
     Doctor.getDocNum()
         .then(function (data) {
+          console.log(data)
           $scope.countAllDoc = data.results
         }, function (err) {
           console.log(err)
         })
   }
   countDocs()
+  /**
+   * 本页面的加载事件
+   * @Author   xjz
+   * @DateTime 2017-07-05
+   * @param    {boolean}  force  是否为硬加载
+   * @return   {[type]}
+   */
   $scope.load = function (force) {
     var time = Date.now()
     if (!force && time - $scope.params.updateTime < 60000) {
@@ -195,6 +310,7 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
       $scope.params.updateTime = time
       Doctor.getMyGroupList({ userId: Storage.get('UID') })
                 .then(function (data) {
+                  console.log(data)
                   return New.addNews('13', Storage.get('UID'), data, 'teamId')
                     .then(function (teams) {
                       return $scope.teams = teams
@@ -202,9 +318,10 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
                 }).then(function (data) {
                   console.log(data)
                 })
-      $interval(function () {
+      function getData () {
         Doctor.getRecentDoctorList({ userId: Storage.get('UID') })
                     .then(function (data) {
+                      console.log(data)
                       New.addNestNews('12', Storage.get('UID'), data.results, 'userId', 'doctorId')
                         .then(function (doctors) {
                           $scope.doctors = doctors
@@ -212,7 +329,9 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
                     }, function (err) {
                       console.log(err)
                     })
-      }, 2000, 2)
+      }
+      $timeout(getData, 500)
+      $interval(getData, 5000, 1)
     }
   }
 
@@ -220,25 +339,45 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
         // type:   '0'=team  '1'=doctor
     $scope.params.isTeam = $state.params.type == '0'
     $scope.params.showSearch = false
+    $scope.msgListener = $scope.$on('im:getMsg', function (event, msg) {
+      $scope.load()
+    })
   })
+    // $scope.$on('im:getMsg',function(event, msg) {
+    //     $scope.load();
+    // });
   $scope.$on('$ionicView.enter', function () {
     $scope.load(true)
   })
+  /**
+   * 刷新
+   * @Author   xjz
+   * @DateTime 2017-07-05
+   * @return   {[type]}
+   */
   $scope.doRefresh = function () {
     $scope.load(true)
         // Stop the ion-refresher from spinning
     $scope.$broadcast('scroll.refreshComplete')
   }
+  /**
+   * 团队和医生版面切换（的按键）
+   * @Author   xjz
+   * @DateTime 2017-07-05
+   * @return   {[type]}
+   */
   $scope.showTeams = function () {
-    $scope.load()
-    $ionicScrollDelegate.scrollTop()
     $scope.params.isTeam = true
   }
   $scope.showDocs = function () {
-    $scope.load()
-    $ionicScrollDelegate.scrollTop()
     $scope.params.isTeam = false
   }
+  /**
+   * 搜索，关掉搜索，清空搜索
+   * @Author   xjz
+   * @DateTime 2017-07-05
+   * @return   {[type]}
+   */
   $scope.search = function () {
     $scope.params.showSearch = true
   }
@@ -265,25 +404,44 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
     $scope.options = options
     $scope.popover = popover
   })
-
+  /**
+   * 点击团队
+   * @Author   xjz
+   * @DateTime 2017-07-05
+   * @param    {element}  ele  点击的元素
+   * @param    {array}    team 被点击的那个团队的信息
+   * @return   {[type]}
+   */
   $scope.itemClick = function (ele, team) {
     if (ele.target.id == 'discuss') $state.go('tab.group-patient', { teamId: team.teamId })
     else $state.go('tab.group-chat', { type: '0', groupId: team.teamId, teamId: team.teamId })
   }
+  /**
+   * 点击医生
+   * @Author   xjz
+   * @DateTime 2017-07-05
+   * @param    {element}  ele  点击的元素
+   * @param    {array}    doc 被点击的那个医生的信息
+   * @return   {[type]}
+   */
   $scope.doctorClick = function (ele, doc) {
     if (ele.target.id == 'profile') $state.go('tab.group-profile', { memberId: doc.userId })
     else $state.go('tab.detail', { type: '2', chatId: doc.userId })
   }
 
   $scope.$on('$ionicView.beforeLeave', function () {
+    $scope.msgListener()
     if ($scope.popover) $scope.popover.hide()
   })
 }])
-// 团队病历
+/**
+ * 团队病历
+ * @Author   xjz
+ * @DateTime 2017-07-05
+ */
 .controller('groupPatientCtrl', ['$scope', '$http', '$state', 'Storage', '$ionicHistory', 'Doctor', '$ionicLoading', 'New', function ($scope, $http, $state, Storage, $ionicHistory, Doctor, ionicLoading, New) {
   $scope.grouppatients0 = ''
   $scope.grouppatients1 = ''
-
   $scope.params = {
     teamId: ''
   }
@@ -293,9 +451,16 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
     $scope.params.teamId = $state.params.teamId
     $scope.load()
   })
+  /**
+   * 加载事件
+   * @Author   xjz
+   * @DateTime 2017-07-05
+   * @return   {[type]}
+   */
   $scope.load = function () {
     Doctor.getGroupPatientList({ teamId: $scope.params.teamId, status: 1 }) // 1->进行中
             .then(function (data) {
+              console.log(data)
               New.addNews($scope.params.teamId, Storage.get('UID'), data.results, 'consultationId')
                 .then(function (pats) {
                   $scope.grouppatients0 = pats
@@ -307,6 +472,7 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
             })
     Doctor.getGroupPatientList({ teamId: $scope.params.teamId, status: 0 }) // 0->已处理
             .then(function (data) {
+              console.log(data)
               New.addNews($scope.params.teamId, Storage.get('UID'), data.results, 'consultationId')
                 .then(function (pats) {
                   $scope.grouppatients1 = pats
@@ -317,16 +483,34 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
               console.log(err)
             })
   }
-
+  /**
+   * 刷新事件
+   * @Author   xjz
+   * @DateTime 2017-07-05
+   * @return   {[type]}
+   */
   $scope.doRefresh = function () {
     $scope.load()
         // Stop the ion-refresher from spinning
     $scope.$broadcast('scroll.refreshComplete')
   }
+  /**
+   * 点击进入聊天
+   * @Author   xjz
+   * @DateTime 2017-07-05
+   * @param    {str}      type   聊天类型
+   * @param    {arr}      patient 那个病人的信息
+   * @return   {[type]}
+   */
   $scope.enterChat = function (type, patient) {
-    $state.go('tab.group-chat', { type: type, teamId: $scope.params.teamId, groupId: patient.consultationId })
+    $state.go('tab.group-chat', { type: type, teamId: $scope.params.teamId, groupId: patient.consultationId})
   }
-
+  /**
+   * 返回
+   * @Author   xjz
+   * @DateTime 2017-07-05
+   * @return   {[type]}
+   */
   $scope.backToGroups = function () {
     $ionicHistory.nextViewOptions({
       disableBack: true
@@ -334,29 +518,45 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
     $state.go('tab.groups', { type: '0' })
   }
 }])
-
-.controller('GroupAddCtrl', ['$scope', '$state', '$ionicHistory', 'Communication', '$ionicPopup', 'Storage', 'Doctor', '$ionicLoading', 'CONFIG', '$http', function ($scope, $state, $ionicHistory, Communication, $ionicPopup, Storage, Doctor, $ionicLoading, CONFIG, $http) {
+/**
+ * 加群
+ * @Author   zyh
+ * @DateTime 2017-07-05
+ */
+.controller('GroupAddCtrl', ['$scope', '$state', '$ionicHistory', 'Communication', '$ionicPopup', 'Storage', 'Doctor', '$ionicLoading', 'CONFIG', function ($scope, $state, $ionicHistory, Communication, $ionicPopup, Storage, Doctor, $ionicLoading, CONFIG) {
   $scope.$on('$ionicView.beforeEnter', function () {
+    $scope.alreadyIn = true
+    var inGroup = false, me = Storage.get('UID')
     $scope.me = [{ userId: '', name: '', photoUrl: '' }]
     Communication.getTeam({ teamId: $state.params.teamId })
             .then(function (data) {
+              console.log(data)
               $scope.group = data.results
-              if (data.results.sponsorId == Storage.get('UID')) $scope.imnotin = false
-              else $scope.imnotin = true
+
+              if (data.results.sponsorId == me) inGroup = true
+              for (var i in data.results.members) {
+                if (data.results.members[i].userId == me) inGroup = true
+              }
+              $scope.alreadyIn = inGroup
             }, function (err) {
               console.log(err)
             })
   })
+  /**
+   * 加群按键
+   * @Author   zyh
+   * @DateTime 2017-07-05
+   * @return   {[type]}
+   */
   $scope.request = function () {
     var confirmPopup = $ionicPopup.confirm({
       title: '确定要加入吗?',
-            // template: ''
       okText: '确定',
       cancelText: '取消'
     })
     confirmPopup.then(function (res) {
       if (res) {
-        Doctor.getDoctorInfo({ userId: Storage.get('UID') })
+        Doctor.doctor({ userId: Storage.get('UID') })
                     .then(function (data) {
                       $scope.me[0].userId = data.results.userId
                       $scope.me[0].name = data.results.name
@@ -368,46 +568,57 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
                                 $ionicLoading.show({ template: '加入成功', duration: 1500 })
                                 $ionicHistory.nextViewOptions({ disableBack: true })
                                 $state.go('tab.groups', { type: '0' })
-                              } else { $ionicLoading.show({ template: '你已经是成员了', duration: 1500 }) };
+                              } else {
+                                $ionicLoading.show({ template: '你已经是成员了', duration: 1500 })
+                              };
                             })
                     })
       }
     })
   }
 }])
-// "咨询”问题详情
-.controller('detailCtrl', ['$scope', '$state', '$rootScope', '$ionicModal', '$ionicScrollDelegate', '$ionicHistory', '$ionicPopover', '$ionicPopup', 'Camera', 'voice', '$http', 'CONFIG', 'arrTool', 'Communication', 'Storage', 'wechat', '$location', 'Doctor', '$q', 'Counsel', 'Account', 'New', 'Patient', '$timeout', function ($scope, $state, $rootScope, $ionicModal, $ionicScrollDelegate, $ionicHistory, $ionicPopover, $ionicPopup, Camera, voice, $http, CONFIG, arrTool, Communication, Storage, wechat, $location, Doctor, $q, Counsel, Account, New, Patient, $timeout) {
+/**
+ * 单聊界面
+ * @Author   xjz
+ * @DateTime 2017-07-05
+ */
+.controller('detailCtrl', ['$ionicPlatform', '$scope', '$state', '$rootScope', '$ionicModal', '$ionicScrollDelegate', '$ionicHistory', '$ionicPopover', '$ionicPopup', 'Camera', 'voice', '$http', 'CONFIG', 'arrTool', 'Communication', 'Counsel', 'Storage', 'Doctor', 'Patient2', '$q', 'New', 'Mywechat', 'Account', 'socket', 'notify', '$timeout', '$ionicLoading', function ($ionicPlatform, $scope, $state, $rootScope, $ionicModal, $ionicScrollDelegate, $ionicHistory, $ionicPopover, $ionicPopup, Camera, voice, $http, CONFIG, arrTool, Communication, Counsel, Storage, Doctor, Patient2, $q, New, Mywechat, Account, socket, notify, $timeout, $ionicLoading) {
+  if ($ionicPlatform.is('ios')) cordova.plugins.Keyboard.disableScroll(true)
+
   $scope.input = {
     text: ''
   }
-
-  var path = $location.absUrl().split('#')[0]
+  $scope.photoUrls = {}
   $scope.params = {
-            // [type]:0=已结束;1=进行中;2=医生
+        // [type]:0=已结束;1=进行中;2=医生
     type: '',
+    counselId: '',
     title: '',
     msgCount: 0,
     helpDivHeight: 0,
+    realCounselType: '',
     moreMsgs: true,
     UID: Storage.get('UID'),
-    realCounselType: '',
     newsType: '',
     targetRole: '',
     counsel: {},
     loaded: false,
     recording: false
   }
+
   $scope.scrollHandle = $ionicScrollDelegate.$getByHandle('myContentScroll')
+  /**
+   * 滚动到底部
+   * @Author   xjz
+   * @DateTime 2017-07-05
+   * @param    {bool}   animate 是否要动画
+   * @param    {number}   delay   延时
+   * @return   {null}
+   */
   function toBottom (animate, delay) {
     if (!delay) delay = 100
     $timeout(function () {
       $scope.scrollHandle.scrollBottom(animate)
-      $timeout(function () {
-        $scope.scrollHandle.resize()
-      }, 500)
-      $timeout(function () {
-        $scope.scrollHandle.resize()
-      }, 1000)
     }, delay)
   }
     // render msgs
@@ -415,17 +626,28 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
     $scope.timer = []
     $scope.photoUrls = {}
     $scope.msgs = []
+    $scope.imgIndex = 0  // 当前显示的图片在消息队列中的位置
+    $scope.imgPosition = 0
     $scope.params.chatId = $state.params.chatId
+    $scope.params.counselId = $state.params.counselId
     $scope.params.type = $state.params.type
+        // 消息初次加载
     $scope.params.loaded = false
     $scope.params.msgCount = 0
-    $scope.params.newsType = $scope.params.type == '2' ? '12' : '11'
+
+        // 消息字段
+    $scope.params.targetRole = ''
+    $scope.params.newsType = $scope.params.type == '2' ? 12 : 11
+
+    try {
+      notify.remove($scope.params.chatId)
+    } catch (e) {}
     console.log($scope.params)
 
     if ($scope.params.type == '2') {
       $scope.params.title = '医生交流'
       $scope.params.targetRole = 'doctor'
-      Doctor.getDoctorInfo({ userId: $scope.params.chatId })
+      Doctor.doctor({ userId: $scope.params.chatId })
                 .then(function (data) {
                   $scope.params.targetName = data.results.name
                   $scope.photoUrls[data.results.userId] = data.results.photoUrl
@@ -433,157 +655,86 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
     } else {
       $scope.params.title = '咨询'
       $scope.params.targetRole = 'patient'
-      Patient.getPatientDetail({userId: $state.params.chatId})
-             .then(function (data) {
-               $scope.params.targetName = data.results.name
-               $scope.photoUrls[data.results.userId] = data.results.photoUrl
-             })
-      $scope.params.key = CONFIG.crossKey
-            // 获取counsel信息
-      Communication.getCounselReport({counselId: $state.params.counselId})
-            .then(function (data) {
-              console.log(data)
-              $scope.params.counsel = data.results
-              $scope.counseltype = data.results.type == '3' ? '2' : data.results.type
-              $scope.counselstatus = data.results.status
-              $scope.params.type = data.results.status
-              if ($scope.counselstatus == '1') $scope.params.title += '-进行中'
-              $scope.params.realCounselType = data.results.type
-              Account.getCounts({doctorId: Storage.get('UID'), patientId: $scope.params.chatId})
-                .then(function (res) {
-                  if ($scope.params.loaded) {
-                    return sendNotice($scope.counseltype, $scope.counselstatus, res.result.count)
-                  } else {
-                    var connectWatcher = $scope.$watch('params.loaded', function (newv, oldv) {
-                      if (newv) {
-                        connectWatcher()
-                        return sendNotice($scope.counseltype, $scope.counselstatus, res.result.count)
-                      }
-                    })
-                  }
+      Patient2.getPatientDetail({ userId: $state.params.chatId })
+                .then(function (data) {
+                  $scope.params.targetName = data.results.name
+                  $scope.photoUrls[data.results.userId] = data.results.photoUrl
                 })
-            }, function (err) {
-              console.log(err)
-            })
+            // 获取counsel信息
+      Counsel.getStatus({ doctorId: Storage.get('UID'), patientId: $scope.params.chatId })
+                .then(function (data) {
+                  console.log('进入页面获取状态 ')
+                  console.log(data)
+                  $scope.params.counsel = data.result
+                  $scope.params.counselId = data.result.counselId
+                  $scope.params.counseltype = data.result.type == '3' ? '2' : (data.result.type == '7' ? '6' : data.result.type)
+                  $scope.params.type = data.result.status
+                  $scope.counselstatus = data.result.status
+                  $scope.params.realCounselType = data.result.type
+                  Account.getCounts({ doctorId: Storage.get('UID'), patientId: $scope.params.chatId })
+                        .then(function (res) {
+                          console.log('进入页面获取次数 ')
+                          console.log(res)
+                          if ($scope.params.loaded) {
+                            return sendNotice($scope.params.counseltype, $scope.counselstatus, res.result.count)
+                          } else {
+                            var connectWatcher = $scope.$watch('params.loaded', function (newv, oldv) {
+                              if (newv) {
+                                connectWatcher()
+                                return sendNotice($scope.params.counseltype, $scope.counselstatus, res.result.count)
+                              }
+                            })
+                          }
+                        })
+                }, function (err) {
+                  console.log(err)
+                })
     }
 
     var loadWatcher = $scope.$watch('params.loaded', function (newv, oldv) {
       if (newv) {
         loadWatcher()
         if ($scope.msgs.length == 0) return
-        var lastMsg = $scope.msgs[$scope.msgs.length - 1]
-        if (lastMsg.fromID == $scope.params.UID) return
-        return New.insertNews({userId: lastMsg.targetID, sendBy: lastMsg.fromID, type: $scope.params.newsType, readOrNot: 1})
+        // var lastMsg = $scope.msgs[$scope.msgs.length - 1]
+        // if (lastMsg.fromID == $scope.params.UID) return
+        // return New.insertNews({ userId: $scope.params.chatId, type: $scope.params.newsType, userRole: 'doctor', readOrNot: 1 })
+        return New.changeNewsStatus({ sendBy: $scope.params.chatId, type: $scope.params.newsType })
       }
     })
   })
 
   $scope.$on('$ionicView.enter', function () {
+    // 非ios平台不需要keyboard-attach directive
+    // if ($ionicPlatform.is('ios') == false)document.getElementById('inputbar').removeAttribute('keyboard-attach')
     if ($rootScope.conversation) {
       $rootScope.conversation.type = 'single'
       $rootScope.conversation.id = $state.params.chatId
     }
-
-    Doctor.getDoctorInfo({userId: $scope.params.UID})
-        .then(function (response) {
-          thisDoctor = response.results
-          $scope.photoUrls[response.results.userId] = response.results.photoUrl
-
-          socket.emit('newUser', {user_name: response.results.name, user_id: $scope.params.UID, client: 'wechatdoctor'})
-
-          socket.on('getMsg', function (data) {
-            console.info('getMsg')
-            console.log(data)
-            if (data.msg.targetType == 'single' && data.msg.fromID == $state.params.chatId && data.msg.newsType == $scope.params.newsType) {
-              $scope.$apply(function () {
-                insertMsg(data.msg)
-              })
-              if ($scope.params.type != '2' && data.msg.contentType == 'custom' && (data.msg.content.type == 'card' || data.msg.content.type == 'counsel-payment')) {
-                Communication.getCounselReport({counselId: data.msg.content.counselId})
-                        .then(function (data) {
-                          console.log(data)
-                          $scope.params.counsel = data.results
-                          $scope.counseltype = data.results.type == '3' ? '2' : data.results.type
-                          $scope.counselstatus = data.results.status
-                          $scope.params.realCounselType = data.results.type
-                        }, function (err) {
-                          console.log(err)
-                        })
-              }
-              if (data.msg.contentType == 'custom' && data.msg.content.type == 'counsel-upgrade') {
-                $scope.$apply(function () {
-                  $scope.counseltype = '2'
-                })
-                $scope.counselstatus = 1
-              }
-              New.insertNews({userId: $scope.params.UID, sendBy: $scope.params.chatId, type: $scope.params.newsType, readOrNot: 1})
-            }
-          })
-          socket.on('messageRes', function (data) {
-            console.info('messageRes')
-            console.log(data)
-            if (data.msg.targetType == 'single' && data.msg.targetID == $state.params.chatId && data.msg.newsType == $scope.params.newsType) {
-              $scope.$apply(function () {
-                insertMsg(data.msg)
-              })
-              if ($scope.counselstatus == 1 && $scope.counseltype == 1 && !(data.msg.contentType == 'custom' && data.msg.content.type == 'count-notice')) {
-                Account.modifyCounts({doctorId: Storage.get('UID'), patientId: $scope.params.chatId, modify: '-1'})
-                        .then(function () {
-                          Account.getCounts({doctorId: Storage.get('UID'), patientId: $scope.params.chatId})
-                            .then(function (data) {
-                              if (data.result.count <= 0) {
-                                $scope.counselstatus = 0
-                                $scope.params.title = '咨询'
-                                endCounsel(1)
-                              }
-                            })
-                        })
-              }
-            }
-          })
-        }, function (err) {
-          console.log(err)
-        })
-    wechat.settingConfig({ url: path }).then(function (data) {
-      config = data.results
-      config.jsApiList = ['startRecord', 'stopRecord', 'playVoice', 'chooseImage', 'uploadVoice', 'uploadImage']
-      wx.config({
-        debug: false,
-        appId: config.appId,
-        timestamp: config.timestamp,
-        nonceStr: config.nonceStr,
-        signature: config.signature,
-        jsApiList: config.jsApiList
-      })
-      wx.error(function (res) {
-        console.error(res)
-        alert(res.errMsg)
-      })
-    })
+    Doctor.doctor({ userId: $scope.params.UID })
+            .then(function (response) {
+              thisDoctor = response.results
+              $scope.photoUrls[response.results.userId] = response.results.photoUrl
+            }, function (err) {
+              console.log(err)
+            })
     imgModalInit()
-    $scope.getMsg(10).then(function (data) {
+    $scope.getMsg(15).then(function (data) {
       $scope.msgs = data
-      toBottom(true, 500)
-            // toBottom(true,800);
+      toBottom(true, 400)
       $scope.params.loaded = true
     })
   })
 
   $scope.$on('keyboardshow', function (event, height) {
     $scope.params.helpDivHeight = height
-    // toBottom(true, 100)
-    setTimeout(function () {
-      $scope.scrollHandle.scrollBottom()
-    }, 100)
+    toBottom(true, 100)
   })
   $scope.$on('keyboardhide', function (event) {
     $scope.params.helpDivHeight = 0
+    $scope.scrollHandle.resize()
   })
   $scope.$on('$ionicView.beforeLeave', function () {
     for (var i in $scope.timer) clearTimeout($scope.timer[i])
-    socket.off('messageRes')
-    socket.off('getMsg')
-    socket.emit('disconnect')
     if ($scope.popover) $scope.popover.hide()
   })
   $scope.$on('$ionicView.leave', function () {
@@ -593,23 +744,137 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
     $rootScope.conversation.type = null
     $rootScope.conversation.id = ''
   })
+  /**
+   * 收到消息事件
+   * @Author   xjz
+   * @DateTime 2017-07-05
+   * @param    {object}   event    event
+   * @param    {object}   data     消息体
+   * @return   {null}
+   */
+  $scope.$on('im:getMsg', function (event, data) {
+    console.log(arguments)
+    console.info('getMsg')
+    console.log(data)
+    if (data.msg.targetType == 'single' && data.msg.fromID == $state.params.chatId && data.msg.newsType == $scope.params.newsType) {
+      $scope.$apply(function () {
+        insertMsg(data.msg)
+      })
+      if ($scope.params.type != '2' && data.msg.contentType == 'custom' && (data.msg.content.type == 'card' || data.msg.content.type == 'counsel-payment')) {
+        Communication.getCounselReport({ counselId: data.msg.content.counselId })
+                    .then(function (data) {
+                      console.log(data)
+                      $scope.params.counsel = data.results
+                      $scope.params.counseltype = data.result.type == '3' ? '2' : (data.result.type == '7' ? '6' : data.result.type)
+                      $scope.counselstatus = data.results.status
+                      $scope.params.realCounselType = data.results.type
+                    }, function (err) {
+                      console.log(err)
+                    })
+      }
+      if (data.msg.contentType == 'custom' && data.msg.content.type == 'counsel-upgrade' && msg.content.flag == 'urgent') {
+        $scope.$apply(function () {
+          $scope.params.counseltype = '6'
+          $scope.params.realCounselType = '7'
+        })
+        $scope.counselstatus = 1
+      } else if (data.msg.contentType == 'custom' && data.msg.content.type == 'counsel-upgrade' && msg.content.flag == 'consult') {
+        $scope.$apply(function () {
+          $scope.params.counseltype = '2'
+          $scope.params.realCounselType = '3'
+        })
+        $scope.counselstatus = 1
+      }
+      // New.insertNews({ userId: $scope.params.chatId, type: $scope.params.newsType, userRole: 'doctor', readOrNot: 1 })
+      New.changeNewsStatus({ sendBy: $scope.params.chatId, type: $scope.params.newsType })
+    }
+  })
+  /**
+   * 收到消息回执事件
+   * @Author   xjz
+   * @DateTime 2017-07-05
+   * @param    {object}   event    event
+   * @param    {object}   data     消息体
+   * @return   {null}
+   */
+  $scope.$on('im:messageRes', function (event, data) {
+    console.log(arguments)
+    console.info('messageRes')
+    console.log(data)
+    if (data.msg.targetType == 'single' && data.msg.targetID == $state.params.chatId && data.msg.newsType == $scope.params.newsType) {
+      var temppos = arrTool.indexOf($scope.msgs, 'createTimeInMillis', data.msg.createTimeInMillis)
+      if (!(temppos != -1 && $scope.msgs[temppos].status == 'send_success')) {
+        console.log('newMsg')
+        $scope.$apply(function () {
+          insertMsg(data.msg)
+        })
+        if ($scope.counselstatus == 1 && ($scope.params.counseltype == 1 || $scope.params.counseltype == 6 || $scope.params.counseltype == 7) && !(data.msg.contentType == 'custom' && data.msg.content.type == 'count-notice')) {
+          Account.modifyCounts({ doctorId: Storage.get('UID'), patientId: $scope.params.chatId, modify: '-1' })
+                    .then(function () {
+                      Account.getCounts({ doctorId: Storage.get('UID'), patientId: $scope.params.chatId })
+                            .then(function (data) {
+                              console.log('发送成功获取次数 ')
+                              console.log(data)
+                              if (data.result.count <= 0) {
+                                $scope.counselstatus = 0
+                                $scope.params.title = '咨询'
+                                endCounsel($scope.params.realCounselType)
+                              }
+                            })
+                    })
+        }
+      }
+    }
+  })
+  /**
+   * 发送通知
+   * @Author   xjz
+   * @DateTime 2017-07-05
+   */
   function sendNotice (type, status, cnt) {
+    console.log(type, status, cnt)
         // var t = setTimeout(function(){
     return sendCnNotice(type, status, cnt)
-        // },2000);
+        // },500);
         // $scope.timer.push(t);
   }
+  /**
+   * 提示剩余条数的通知
+   * @Author   xjz
+   * @DateTime 2017-07-05
+   */
+  /**
+   * [sendCnNotice description]
+   * @Author   xjz
+   * @DateTime 2017-07-05
+   * @param    {string}   type   咨询/问诊
+   * @param    {string}   status 是否进行中
+   * @param    {number}   cnt    剩余次数
+   * @return   {null}
+   */
   function sendCnNotice (type, status, cnt) {
     var len = $scope.msgs.length
     if (len == 0 || !($scope.msgs[len - 1].content.type == 'count-notice' && $scope.msgs[len - 1].content.count == cnt)) {
       var bodyDoc = ''
-      if (type != '1') {
+      if (type == '2') {
         if (status == '0') {
           bodyDoc = '您仍可以向患者追加回答，该消息不计费'
           bodyPat = '您没有提问次数了。如需提问，请新建咨询或问诊'
         } else {
-          bodyDoc = '患者提问不限次数'
-          bodyPat = '您可以不限次数进行提问'
+          bodyDoc = '患者对您进行问诊，询问次数不限，如您认为回答结束，请点击右上角结束。请在24小时内回复患者。'
+          bodyPat = '您询问该医生的次数不限，最后由医生结束此次问诊，请尽量详细描述病情和需求。医生会在24小时内回答，如超过24小时医生未作答，本次咨询关闭，且不收取费用。'
+        }
+      } else if (type == '6') { // 加急咨询
+        if (cnt <= 0 || status == '0') {
+          bodyDoc = '您仍可以向患者追加回答，该消息不计费'
+          bodyPat = '您没有提问次数了。如需提问，请新建咨询或问诊'
+        } else {
+          bodyDoc = '您还需要回答' + cnt + '个问题'
+          bodyPat = '您还有' + cnt + '次提问机会'
+          if (cnt == 3) {
+            bodyDoc = '患者对您进行加急咨询，请在2小时内回复患者，您最多需做三次回答，答满三次后，本次咨询结束；如不满三个问题，2小时后本次咨询关闭。您还需要回答' + cnt + '个问题。'
+            bodyPat = '根据您提供的问题及描述，医生最多做三次回答，答满三次后，本次咨询结束，请尽量详细描述病情和需求；如不满三个问题，2小时后本次咨询关闭。医生会在2小时内回答，如超过2小时医生未作答，本次咨询关闭，且不收取费用。您还有' + cnt + '次提问机会。'
+          }
         }
       } else {
         if (cnt <= 0 || status == '0') {
@@ -618,6 +883,10 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
         } else {
           bodyDoc = '您还需要回答' + cnt + '个问题'
           bodyPat = '您还有' + cnt + '次提问机会'
+          if (cnt == 3) {
+            bodyDoc = '患者对您进行咨询，您最多需做三次回答，答满三次后，本次咨询结束；如不满三个问题，24小时后本次咨询关闭。请在24小时内回复患者。您还需要回答' + cnt + '个问题。'
+            bodyPat = '根据您提供的问题及描述，医生最多做三次回答，答满三次后，本次咨询结束，请尽量详细描述病情和需求；如不满三个问题，24小时后本次咨询关闭。医生会在24小时内回答，如超过24小时医生未作答，本次咨询关闭，且不收取费用。您还有' + cnt + '次提问机会。'
+          }
         }
       }
 
@@ -628,13 +897,13 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
         count: cnt,
         bodyDoc: bodyDoc,
         bodyPat: bodyPat,
-        counseltype: $scope.counseltype
+        counseltype: $scope.params.counseltype
       }
       var msgJson = {
-        clientType: 'wechatdoctor',
+        clientType: 'doctor',
         contentType: 'custom',
-        fromID: thisDoctor.userId,
-        fromName: thisDoctor.name,
+        fromID: $scope.params.UID,
+        fromName: '',
         fromUser: {
                     // avatarPath:CONFIG.mediaUrl+'uploads/photos/resized'+thisDoctor.userId+'_myAvatar.jpg'
         },
@@ -647,20 +916,19 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
         targetRole: $scope.params.targetRole,
         content: notice
       }
+            // socket.emit('message',{msg:msgJson,to:$scope.params.chatId,role:'doctor'});
       $scope.msgs.push(msgJson)
+            // toBottom(true,300);
+            // $scope.pushMsg(msgJson);
     }
   }
-  function noMore () {
-    $scope.params.moreMsgs = false
-    setTimeout(function () {
-      $scope.$apply(function () {
-        $scope.params.moreMsgs = true
-      })
-    }, 5000)
-  }
-  $scope.scrollBottom = function () {
-    toBottom(true)
-  }
+  /**
+   * 获取消息
+   * @Author   xjz
+   * @DateTime 2017-07-05
+   * @param    {num}   num   获取的数量
+   * @return   {promise}
+   */
   $scope.getMsg = function (num) {
     console.info('getMsg')
     return $q(function (resolve, reject) {
@@ -669,44 +937,77 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
         newsType: $scope.params.newsType,
         id1: Storage.get('UID'),
         id2: $scope.params.chatId,
+        receiverRole: $scope.params.newsType == 11 ? 'patient' : 'doctor',
+        sendByRole: 'doctor',
         skip: $scope.params.msgCount,
         limit: num
       }
       Communication.getCommunication(q)
-            .then(function (data) {
-              var d = data.results
-              $scope.$broadcast('scroll.refreshComplete')
-              if (d == '没有更多了!') return noMore()
-              var res = []
-              for (var i in d) {
-                res.push(d[i].content)
-              }
-              if (res.length == 0) $scope.params.moreMsgs = false
-              else {
-                $scope.params.msgCount += res.length
-                if ($scope.msgs.length != 0) $scope.msgs[0].diff = ($scope.msgs[0].time - res[0].time) > 300000
-                for (var i = 0; i < res.length - 1; ++i) {
-                  if (res[i].contentType == 'image') res[i].content.thumb = CONFIG.mediaUrl + res[i].content['src_thumb']
-                  res[i].direct = res[i].fromID == $scope.params.UID ? 'send' : 'receive'
-                  res[i].diff = (res[i].time - res[i + 1].time) > 300000
-                  $scope.msgs.unshift(res[i])
-                }
-                res[i].direct = res[i].fromID == $scope.params.UID ? 'send' : 'receive'
-                res[i].diff = true
-                $scope.msgs.unshift(res[i])
-              }
-              resolve($scope.msgs)
-            }, function (err) {
-              $scope.$broadcast('scroll.refreshComplete')
-              resolve($scope.msgs)
-            })
+                .then(function (data) {
+                  console.log(data)
+                  var d = data.results
+                  $scope.$broadcast('scroll.refreshComplete')
+                  if (d == '没有更多了!') return noMore()
+                  var res = []
+                  for (var i in d) {
+                    res.push(d[i].content)
+                  }
+                  if (res.length == 0) $scope.params.moreMsgs = false
+                  else {
+                    $scope.params.msgCount += res.length
+                    if ($scope.msgs.length != 0) $scope.msgs[0].diff = ($scope.msgs[0].time - res[0].time) > 300000
+                    for (var i = 0; i < res.length - 1; ++i) {
+                      if (res[i].contentType == 'image') res[i].content.thumb = CONFIG.mediaUrl + res[i].content['src_thumb']
+                      res[i].direct = res[i].fromID == $scope.params.UID ? 'send' : 'receive'
+                      res[i].diff = (res[i].time - res[i + 1].time) > 300000
+                      $scope.msgs.unshift(res[i])
+                    }
+                    res[i].direct = res[i].fromID == $scope.params.UID ? 'send' : 'receive'
+                    res[i].diff = true
+                    $scope.msgs.unshift(res[i])
+                  }
+                  console.log($scope.msgs)
+                  resolve($scope.msgs)
+                }, function (err) {
+                  $scope.$broadcast('scroll.refreshComplete')
+                  resolve($scope.msgs)
+                })
     })
   }
-
+  /**
+   * 没有更多了
+   * @Author   xjz
+   * @DateTime 2017-07-05
+   * @return   {}
+   */
+  function noMore () {
+    $scope.params.moreMsgs = false
+    setTimeout(function () {
+      $scope.$apply(function () {
+        $scope.params.moreMsgs = true
+      })
+    }, 5000)
+  }
+  /**
+   * 再加载15条
+   * @Author   xjz
+   * @DateTime 2017-07-05
+   */
   $scope.DisplayMore = function () {
-    $scope.getMsg(10).then(function (data) {
+    $scope.getMsg(15).then(function (data) {
       $scope.msgs = data
     })
+  }
+  /**
+   * 滚到底了
+   * @Author   xjz
+   * @DateTime 2017-07-05
+   * @return   {[type]}
+   */
+  $scope.scrollBottom = function () {
+    $scope.showVoice = false
+    $scope.showMore = false
+    $scope.scrollHandle.scrollBottom(true)
   }
     // 长按工具条
   var options = [{
@@ -721,6 +1022,12 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
     $scope.popover = popover
   })
     // view image
+    /**
+     * 图片模板初始化
+     * @Author   xjz
+     * @DateTime 2017-07-05
+     * @return   {[type]}
+     */
   function imgModalInit () {
     $scope.zoomMin = 1
     $scope.imageUrl = ''
@@ -729,74 +1036,207 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
       scope: $scope
     }).then(function (modal) {
       $scope.modal = modal
+            // $scope.modal.show();
       $scope.imageHandle = $ionicScrollDelegate.$getByHandle('imgScrollHandle')
     })
   }
 
   $scope.$on('image', function (event, args) {
+    console.log(args)
     event.stopPropagation()
     $scope.imageHandle.zoomTo(1, true)
-    $scope.imageUrl = CONFIG.mediaUrl + (args[2].src || args[2].src_thumb)
+    $scope.imgIndex = $scope.msgs.indexOf(args[2])
+    $scope.imgPosition = $scope.imgIndex
+    $scope.imageUrl = args[2].content.localPath || (CONFIG.mediaUrl + (args[2].content.src || args[2].content.src_thumb))
     $scope.modal.show()
   })
+  /**
+   * 关掉图片
+   * @Author   xjz
+   * @DateTime 2017-07-05
+   * @return   {[type]}
+   */
   $scope.closeModal = function () {
     $scope.imageHandle.zoomTo(1, true)
     $scope.modal.hide()
   }
+  /**
+   * 双击调整缩放
+   * @Author   xjz
+   * @DateTime 2017-07-05
+   * @return   {[type]}
+   */
   $scope.switchZoomLevel = function () {
     if ($scope.imageHandle.getScrollPosition().zoom != $scope.zoomMin) { $scope.imageHandle.zoomTo(1, true) } else {
       $scope.imageHandle.zoomTo(5, true)
     }
   }
+  /**
+   * 右划图片
+   * @Author   zyh
+   * @DateTime 2017-07-07
+   * @return   {[type]}   [description]
+   */
+  $scope.onSwipeRight = function () {
+    if ($scope.imageHandle.getScrollPosition().zoom === $scope.zoomMin) {  // 没有缩放时才允许切换
+      $scope.imgIndex--
+      if ($scope.imgIndex >= 0) {
+        if ($scope.msgs[$scope.imgIndex].contentType === 'image') {
+          $scope.imgPosition = $scope.imgIndex
+          $scope.imageUrl = (CONFIG.mediaUrl + ($scope.msgs[$scope.imgIndex].content.src || $scope.msgs[$scope.imgIndex].content.src_thumb))
+        } else {
+          $scope.onSwipeRight()
+        }
+      } else { $scope.imgIndex = $scope.imgPosition }
+    }
+  }
+  /**
+   * 左划图片
+   * @Author   zyh
+   * @DateTime 2017-07-07
+   * @return   {[type]}   [description]
+   */
+  $scope.onSwipeLeft = function () {
+    if ($scope.imageHandle.getScrollPosition().zoom === $scope.zoomMin) {  // 没有缩放时才允许切换
+      $scope.imgIndex++
+      if ($scope.imgIndex < $scope.msgs.length) {
+        if ($scope.msgs[$scope.imgIndex].contentType === 'image') {
+          $scope.imgPosition = $scope.imgIndex
+          $scope.imageUrl = (CONFIG.mediaUrl + ($scope.msgs[$scope.imgIndex].content.src || $scope.msgs[$scope.imgIndex].content.src_thumb))
+        } else {
+          $scope.onSwipeLeft()
+        }
+      } else { $scope.imgIndex = $scope.imgPosition }
+    }
+  }
+  /**
+   * 事件：听语音消息
+   * @Author   xjz
+   * @DateTime 2017-07-05
+   * @param    {object}   event    事件
+   * @param    {array}    args     ['voice',msg.content]
+   * @return   {null}
+   */
   $scope.$on('voice', function (event, args) {
+    console.log(CONFIG.mediaUrl + args[1].src[0])
     event.stopPropagation()
-    $scope.params.audio = args[1]
-    wx.downloadVoice({
-      serverId: args[1].mediaId, // 需要下载的音频的服务器端ID，由uploadVoice接口获得
-      isShowProgressTips: 0, // 默认为1，显示进度提示
-      success: function (res) {
-                // var localId = res.localId; // 返回音频的本地ID
-        wx.playVoice({
-          localId: res.localId// 需要播放的音频的本地ID，由stopRecord接口获得
-        })
-      }
-    })
+    $scope.sound = new Media(CONFIG.mediaUrl + args[1].src[0],
+             function () {
+             },
+             function (err) {
+               console.log(err)
+             })
+    $scope.sound.play()
   })
-
+  /**
+   * 事件：长按消息
+   * @Author   xjz
+   * @DateTime 2017-07-05
+   * @param    {object}   event    事件
+   * @param    {array}    args     ['holdmsg',msg.createTimeInMillis,$event]
+   * @return   {null}
+   */
   $scope.$on('holdmsg', function (event, args) {
-    $scope.holdId = args[1]
     event.stopPropagation()
+    $scope.holdId = args[1]
+    console.log(args)
     $scope.popover.show(args[2])
   })
+  /**
+   * 事件：点击重发
+   * @Author   zyh
+   * @DateTime 2017-09-30
+   * @param    {object}   event    事件
+   * @param    {array}    args     ['resend',msg.createTimeInMillis]
+   * @return   {null}
+   */
+  $scope.$on('resend', function (event, args) {
+    event.stopPropagation()
+    $scope.resendid = args[1]
+    console.log(args)
+    var pos = arrTool.indexOf($scope.msgs, 'createTimeInMillis', args[1])
+    if (pos != -1 && $scope.msgs[pos].status == 'send_fail') $scope.msgs[pos].status = 'send_going'
+    socket.emit('message', {msg: $scope.msgs[pos], to: $scope.params.chatId, role: 'doctor'})
+    $timeout(function () {
+      if (pos != -1 && $scope.msgs[pos].status == 'send_going') $scope.msgs[pos].status = 'send_fail'
+    }, 10000)
+    // insertMsg($scope.msgs[pos])
+  })
+  /**
+   * 事件：点击card
+   * @Author   xjz
+   * @DateTime 2017-07-05
+   * @param    {object}   event    事件
+   * @param    {array}    args     ['viewcard',msg,$event]
+   * @return   {null}
+   */
   $scope.$on('viewcard', function (event, args) {
     event.stopPropagation()
+    console.log(args[2])
     if (args[2].target.tagName == 'IMG') {
       $scope.imageHandle.zoomTo(1, true)
       $scope.imageUrl = args[2].target.currentSrc
+      console.log(args[2].target.attributes.hires.nodeValue)
       $scope.modal.show()
     } else {
       Storage.set('getpatientId', args[1].content.patientId)
+
+      var statep = {
+        type: $scope.params.type,
+        chatId: $scope.params.chatId
+      }
+      Storage.set('backId', 'tab.detail')
+      Storage.set('singleChatParams', JSON.stringify(statep))
       $state.go('tab.patientDetail')
+            // $state.go('tab.consult-detail',{consultId:args[1]});
     }
+        // $state.go('tab.consult-detail',{consultId:args[1]});
   })
+  /**
+   * 选转发给团队/医生
+   * @Author   xjz
+   * @DateTime 2017-07-05
+   * @param    {num}  data  两种选择
+   * @return   {[type]}
+   */
   $scope.toolChoose = function (data) {
         // console.log(data);
-
     var content = $scope.msgs[arrTool.indexOf($scope.msgs, 'createTimeInMillis', $scope.holdId)].content
     if (data == 0) $state.go('tab.selectDoc', { msg: content })
     if (data == 1) $state.go('tab.selectTeam', { msg: content })
   }
+  /**
+   * 事件：点击头像
+   * @Author   xjz
+   * @DateTime 2017-07-05
+   * @param    {object}   event    事件
+   * @param    {array}    args     ['profile',msg]
+   * @return   {null}
+   */
   $scope.$on('profile', function (event, args) {
     event.stopPropagation()
     if (args[1].direct == 'receive') {
       if ($scope.params.type == '2') {
-        return $state.go('tab.group-profile', { memberId: args[1].fromID })
+        return $state.go('tab.group-profile', { memberId: args[1].fromID})
       } else {
         Storage.set('getpatientId', args[1].fromID)
+        var statep = {
+          type: $scope.params.type,
+          chatId: $scope.params.chatId
+        }
+        Storage.set('backId', 'tab.detail')
+        Storage.set('singleChatParams', JSON.stringify(statep))
         return $state.go('tab.patientDetail')
       }
     }
   })
+  /**
+   * 结束消息
+   * @Author   xjz
+   * @DateTime 2017-07-05
+   * @param    {num}     type  咨询还是问诊
+   * @return   {[type]}
+   */
   function endCounsel (type) {
     Counsel.changeStatus({doctorId: Storage.get('UID'), patientId: $scope.params.chatId, type: type, status: 0})
         .then(function (data) {
@@ -807,12 +1247,15 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
             counseltype: 1,
             counselId: $scope.params.counselId
           }
-          if (type == 2) {
+          if (type == 2 || type == 3) {
             endlMsg.info = '问诊已结束'
             endlMsg.counseltype = 2
+          } else if (type == 6 || type == 7) {
+            endlMsg.info = '加急咨询已结束'
+            endlMsg.counseltype = 6
           }
           var msgJson = {
-            clientType: 'wechatdoctor',
+            clientType: 'doctor',
             contentType: 'custom',
             fromID: thisDoctor.userId,
             fromName: thisDoctor.name,
@@ -830,9 +1273,16 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
           }
           socket.emit('message', {msg: msgJson, to: $scope.params.chatId, role: 'doctor'})
           $scope.counselstatus = '0'
+          $scope.pushMsg(msgJson)
         })
-    Counsel.changeCounselStatus({counselId: $state.params.counselId, status: 0})
+    // Counsel.changeCounselStatus({counselId: $state.params.counselId, status: 0})
   }
+  /**
+   * 结束咨询按钮
+   * @Author   xjz
+   * @DateTime 2017-07-05
+   * @return   {[type]}
+   */
   $scope.finishConsult = function () {
     var confirmPopup = $ionicPopup.confirm({
       title: '确定要结束此次咨询吗?',
@@ -852,11 +1302,16 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
       }
     })
   }
+  /**
+   * 更新一条消息
+   * @Author   xjz
+   * @DateTime 2017-07-05
+   * @param    {object}   msg 消息体
+   * @param    {number}   pos msg在msgs中的下标
+   * @return   {null}
+   */
   $scope.updateMsg = function (msg, pos) {
     console.info('updateMsg')
-    if (msg.contentType == 'image') msg.content.thumb = CONFIG.mediaUrl + msg.content['src_thumb']
-    msg.direct = $scope.msgs[pos].direct
-
     if (pos == 0) {
       msg.diff = true
     } else if (msg.hasOwnProperty('time')) {
@@ -870,8 +1325,18 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
         msg.diff = false
       }
     }
+
+    msg.content.src = $scope.msgs[pos].content.src
+    msg.direct = $scope.msgs[pos].direct
     $scope.msgs[pos] = msg
   }
+  /**
+   * 消息加入队列
+   * @Author   xjz
+   * @DateTime 2017-07-05
+   * @param    {obj}     msg    那条消息
+   * @return   {[type]}
+   */
   $scope.pushMsg = function (msg) {
     console.info('pushMsg')
     var len = $scope.msgs.length
@@ -888,23 +1353,24 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
         }
       }
     }
-    msg.direct = msg.fromID == $scope.params.UID ? 'send' : 'receive'
-    if (msg.contentType == 'image') {
-      msg.content.thumb = CONFIG.mediaUrl + msg.content['src_thumb']
-      $timeout(function () {
-        $http.get(msg.content.thumb)
-          .then(function (data) {
-            $scope.msgs.push(msg)
-            toBottom(true, 500)
-            $scope.params.msgCount++
-          })
-      }, 500)
-    } else {
-      $scope.msgs.push(msg)
-      toBottom(true, 200)
-      $scope.params.msgCount++
-    }
+        // msg.direct = msg.fromID==$scope.params.UID?'send':'receive';
+    $scope.params.msgCount++
+    $scope.msgs.push(msg)
+    toBottom(true, 200)
+    toBottom(true, 600)
+    // var waittime = msg.contentType === 'image' ? 10000 : 5000
+    $timeout(function () {
+      var pos = arrTool.indexOf($scope.msgs, 'createTimeInMillis', msg.createTimeInMillis)
+      if (pos != -1 && $scope.msgs[pos].status == 'send_going') $scope.msgs[pos].status = 'send_fail'
+    }, 10000)
   }
+  /**
+   * 插入消息
+   * @Author   xjz
+   * @DateTime 2017-07-05
+   * @param    {object}   msg 消息
+   * @return   {null}
+   */
   function insertMsg (msg) {
     var pos = arrTool.indexOf($scope.msgs, 'createTimeInMillis', msg.createTimeInMillis)
     if (pos == -1) {
@@ -914,7 +1380,16 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
     }
   }
     // send message--------------------------------------------------------------------------------
-  function msgGen (content, type, local) {
+    //
+  /**
+   * 生成消息体
+   * @Author   xjz
+   * @DateTime 2017-07-05
+   * @param    {object}   content 用于生成msg.content字段
+   * @param    {string}   type    msg type
+   * @return   {[type]}           [description]
+   */
+  function msgGen (content, type) {
     var data = {}
     if (type == 'text') {
       data = {
@@ -922,19 +1397,16 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
       }
     } else if (type == 'image') {
       data = {
-        mediaId: content[0],
-        mediaId_thumb: content[1],
-        src: '',
-        src_thumb: ''
+        src: content[0],
+        src_thumb: content[1]
       }
     } else if (type == 'voice') {
       data = {
-        mediaId: content,
-        src: ''
+        src: content
       }
     }
     var msgJson = {
-      clientType: 'wechatdoctor',
+      clientType: 'doctor',
       contentType: type,
       fromID: $scope.params.UID,
       fromName: thisDoctor.name,
@@ -950,26 +1422,68 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
       targetRole: $scope.params.targetRole,
       content: data
     }
-    if (local) {
-      if (type == 'image') {
-        msgJson.content.localId = content[2]
-        msgJson.content.localId_thumb = content[3]
-      } else if (type == 'voice') {
-        msgJson.content.localId = content[1]
-      }
-    }
     return msgJson
   }
+  /**
+   * 生成消息体，用于消息发送成功前，页面显示。发送成功后，$scope.updateMsg更新该消息
+   * @Author   xjz
+   * @DateTime 2017-07-05
+   * @param    {object}   msg 消息
+   * @param    {string}   url 资源本地路径（图片等）
+   * @return   {[type]}       [description]
+   */
+  function localMsgGen (msg, url) {
+    var d = {},
+      type = msg.contentType
+    if (type == 'image') {
+      d.src = msg.content.src
+      d.src_thumb = msg.content.src_thumb
+      d.localPath = url
+    } else if (type == 'voice') {
+      d.localPath = url
+      d.src = msg.content.src
+    }
+    return {
+      clientType: 'doctor',
+      contentType: type,
+      fromID: msg.fromID,
+      fromName: msg.fromName,
+      fromUser: msg.fromUser,
+      targetID: msg.targetID,
+      targetName: msg.targetName,
+      targetType: 'single',
+      status: 'send_going',
+      createTimeInMillis: msg.createTimeInMillis,
+      newsType: msg.newsType,
+      targetRole: $scope.params.targetRole,
+      content: d
+    }
+  }
+  /**
+   * 发送消息
+   * @Author   xjz
+   * @DateTime 2017-07-05
+   * @param    {object}   content msg.content相关
+   * @param    {string}   type    消息类型
+   * @return   {[type]}           [description]
+   */
   function sendmsg (content, type) {
     var msgJson = msgGen(content, type)
-    console.info('socket.connected' + socket.connected)
+    console.info('[socket.connected]', socket.connected)
     socket.emit('message', {msg: msgJson, to: $scope.params.chatId, role: 'doctor'})
-    toBottom(true)
+    $scope.pushMsg(msgJson)
   }
+  /**
+   * 点击输入框提交按钮
+   * @Author   xjz
+   * @DateTime 2017-07-05
+   * @return   {[type]}   [description]
+   */
   $scope.submitMsg = function () {
-    if ($scope.params.newsType == '11') {
+    if ($scope.params.newsType == 11) {
       var targetRole = 'patient'
       var actionUrl = 'https://open.weixin.qq.com/connect/oauth2/authorize?appid=wxb830b12dc0fa74e5&redirect_uri=http://proxy.haihonghospitalmanagement.com/go&response_type=code&scope=snsapi_userinfo&state=' + targetRole + '_' + $scope.params.newsType + '_' + $state.params.type + '_' + $scope.params.UID + '_' + $state.params.counselId + '&#wechat_redirect'
+
       var template = {
         'userId': $scope.params.chatId, // 患者的UID
         'role': 'patient',
@@ -978,7 +1492,7 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
           'url': actionUrl,
           'data': {
             'first': {
-              'value': '您的' + ($scope.counseltype == 1 ? '咨询' : '问诊') + $scope.params.counsel.symptom + '已被回复！', // XXX取那个咨询或问诊的标题
+              'value': '您的' + ($scope.params.counseltype == 1 ? '咨询' : ($scope.params.counseltype == 6 ? '加急咨询' : '问诊')) + $scope.params.counsel.symptom + '已被回复！', // XXX取那个咨询或问诊的标题
               'color': '#173177'
             },
             'keyword1': {
@@ -1000,84 +1514,117 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
           }
         }
       }
-      wechat.messageTemplate(template)
+      Mywechat.messageTemplate(template)
     }
     sendmsg($scope.input.text, 'text')
     $scope.input.text = ''
   }
-    // get image
+
+/**
+ * 捕捉上传的图片
+ * @Author   xjz
+ * @DateTime 2017-07-05
+ * @param    {[type]}
+ * @return   {[type]}
+ */
   $scope.getImage = function (type) {
     $scope.showMore = false
-    var ids = ['', '']
-    if (type == 'cam') var st = ['camera']
-    else var st = ['album']
-    wx.chooseImage({
-      count: 1, // 默认9
-      sizeType: ['original', 'compressed'], // 可以指定是原图还是压缩图，默认二者都有
-      sourceType: st, // 可以指定来源是相册还是相机，默认二者都有
-      success: function (response) {
-        console.log(response)
-        ids = ids.concat(response.localIds)
-        wx.uploadImage({
-          localId: response.localIds[0], // 需要上传的图片的本地ID，由chooseImage接口获得
-          isShowProgressTips: 0, // 默认为1，显示进度提示
-          success: function (res) {
-            console.log(res)
-            ids[0] = res.serverId // 返回图片的服务器端ID
-                        // if(cnt)
-            sendmsg(ids, 'image')
-                        // else cnt++;
-          }
-        })
-      }
-    })
+    Camera.getPicture(type, true)
+            .then(function (url) {
+              console.log(url)
+              var fm = md5(Date.now(), $scope.params.chatId) + '.jpg',
+                d = [
+                  'uploads/photos/' + fm,
+                  'uploads/photos/resized' + fm
+                ],
+                imgMsg = msgGen(d, 'image'),
+                localMsg = localMsgGen(imgMsg, url)
+              $scope.pushMsg(localMsg)
+              Camera.uploadPicture(url, fm)
+                    .then(function () {
+                      socket.emit('message', {msg: imgMsg, to: $scope.params.chatId, role: 'doctor'})
+                    }, function () {
+                      $ionicLoading.show({ template: '图片上传失败', duration: 2000 })
+                    })
+            }, function (err) {
+                // console.error(err);
+            })
   }
 
-    // get voice
+  /**
+   * 上传的语音
+   * @Author   xjz
+   * @DateTime 2017-07-05
+   * @return   {[type]}
+   */
   $scope.getVoice = function () {
-    wx.startRecord()
+        // voice.record() do 2 things: record --- file manipulation
+    voice.record()
+            .then(function (fileUrl) {
+              $scope.params.recording = false
+              console.log(fileUrl)
+              var fm = md5(Date.now(), $scope.params.chatId) + '.amr',
+                d = [
+                  'uploads/photos/' + fm
+                         // 'uploads/photos/resized' + fm
+                ],
+                voiceMsg = msgGen(d, 'voice'),
+                localMsg = localMsgGen(voiceMsg, fileUrl)
+              $scope.pushMsg(localMsg)
+              Camera.uploadVoice(fileUrl, fm)
+                     .then(function (data) {
+                       console.log(data)
+                       socket.emit('message', {msg: voiceMsg, to: $scope.params.chatId, role: 'doctor'})
+                     }, function () {
+                       $ionicLoading.show({ template: '语音上传失败', duration: 2000 })
+                     })
+            }, function (err) {
+              $ionicLoading.show({ template: '打开语音失败', duration: 2000 })
+              console.log(err)
+            })
     $scope.params.recording = true
   }
+  /**
+   * 停止录音
+   * @Author   xjz
+   * @DateTime 2017-07-05
+   * @return   {[type]}
+   */
   $scope.stopAndSend = function () {
-    wx.stopRecord({
-      success: function (res) {
-        var ids = ['', res.localId]
-        var m = msgGen(ids, 'voice', true)
-                // $scope.pushMsg(m);
-        toBottom(true)
-        $scope.params.recording = false
-        wx.uploadVoice({
-          localId: res.localId, // 需要上传的图片的本地ID，由chooseImage接口获得
-          isShowProgressTips: 0, // 默认为1，显示进度提示
-          success: function (response) {
-            console.log(response)
-            ids[0] = response.serverId
-                        // var serverId = res.serverId; // 返回图片的服务器端ID
-            sendmsg(ids, 'voice')
-          }
-        })
-      }
-    })
+    voice.stopRec()
   }
-
+  /**
+   * 返回按钮
+   * @Author   xjz
+   * @DateTime 2017-07-05
+   * @return   {[type]}
+   */
   $scope.goChats = function () {
     $ionicHistory.nextViewOptions({
       disableBack: true
     })
-    if ($scope.params.type == '1') $state.go('tab.doing')
-    else if ($scope.params.type == '0') $state.go('tab.did')
-    else $state.go('tab.groups', { type: '1' })
+    if ($ionicHistory.backView().title == '消息中心')$ionicHistory.goBack()
+    else {
+      if ($state.params.type == '1') $state.go('tab.doing')
+      else if ($state.params.type == '0') $state.go('tab.did')
+      else $state.go('tab.groups', { type: '1' })
+    }
   }
 }])
-// 团队信息
-.controller('GroupDetailCtrl', ['$scope', '$state', '$ionicModal', 'Communication', '$ionicPopup', 'Storage', 'Doctor', '$ionicHistory', function ($scope, $state, $ionicModal, Communication, $ionicPopup, Storage, Doctor, $ionicHistory) {
+/**
+ * 团队详情页面
+ * @Author   zyh
+ * @DateTime 2017-07-05
+ */
+.controller('GroupDetailCtrl', ['$scope', '$state', '$ionicModal', 'Communication', '$ionicPopup', 'Storage', 'Doctor', function ($scope, $state, $ionicModal, Communication, $ionicPopup, Storage, Doctor) {
   $scope.$on('$ionicView.beforeEnter', function () {
     Communication.getTeam({ teamId: $state.params.teamId })
             .then(function (data) {
               $scope.team = data.results
               $scope.members2 = data.results.members
-              Doctor.getDoctorInfo({ userId: $scope.team.sponsorId })
+              Doctor.doctor({ userId: $scope.team.sponsorId })
                     .then(function (data) {
+                      console.log(data)
                       $scope.members = $scope.members2.concat(data.results)
                     })
               if ($scope.team.sponsorId == Storage.get('UID')) $scope.ismyteam = true
@@ -1086,34 +1633,61 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
               console.log(err)
             })
   })
-
+  /**
+   * 团队加人
+   * @Author   xjz
+   * @DateTime 2017-07-05
+   */
   $scope.addMember = function () {
+    console.log($scope.team.teamId)
     $state.go('tab.group-add-member', {teamId: $scope.team.teamId})
   }
+  /**
+   * 查看医生信息
+   * @Author   xjz
+   * @DateTime 2017-07-05
+   * @param    {object}   member doctor
+   * @return   {[type]}          [description]
+   */
   $scope.viewProfile = function (member) {
+    console.log(member)
     $state.go('tab.group-profile', {memberId: member.userId})
   }
+  /**
+   * 查看团队二维码
+   * @Author   xjz
+   * @DateTime 2017-07-05
+   * @return   {[type]}   [description]
+   */
   $scope.showQRCode = function () {
     $state.go('tab.group-qrcode', { team: $scope.team })
   }
-  $scope.closeModal = function () {
-    $scope.modal.hide()
-    $scope.modal.remove()
-  }
+  /**
+   * state.go团队踢人
+   * @Author   xjz
+   * @DateTime 2017-07-05
+   * @return   {[type]}   [description]
+   */
   $scope.gokick = function () {
     $state.go('tab.group-kick', { teamId: $scope.team.teamId })
   }
 }])
-// 踢人
+/**
+ * 踢人页面
+ * @Author   xjz
+ * @DateTime 2017-07-05
+ */
 .controller('GroupKickCtrl', ['$scope', '$state', '$ionicModal', 'Communication', '$ionicPopup', 'Storage', 'CONFIG', function ($scope, $state, $ionicModal, Communication, $ionicPopup, Storage, CONFIG) {
   $scope.$on('$ionicView.beforeEnter', function () {
     Communication.getTeam({ teamId: $state.params.teamId })
             .then(function (data) {
+              $scope.teamname = data.results.name
               $scope.doctors = data.results.members
             }, function (err) {
               console.log(err)
             })
   })
+
   $scope.kick = function (id) {
     var confirmPopup = $ionicPopup.confirm({
       title: '确定要将此人移出团队吗?',
@@ -1122,17 +1696,15 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
     })
     confirmPopup.then(function (res) {
       if (res) {
-        Communication.removeMember({ teamId: $state.params.teamId, membersuserId: $scope.doctors[id].userId })
+        Communication.removeMember({ teamId: $state.params.teamId, membersUserId: $scope.doctors[id].userId })
                     .then(function (data) {
                       if (data.result == '更新成员成功') {
-                        var idarr = [$scope.doctors[id].userId]
                         Communication.getTeam({ teamId: $state.params.teamId })
                                 .then(function (data) {
                                   $scope.doctors = data.results.members
                                 }, function (err) {
-                                  console.log(err)
                                 })
-                      }
+                      };
                     }, function (err) {
                       console.log(err)
                     })
@@ -1140,7 +1712,11 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
     })
   }
 }])
-// 团队二维码
+/**
+ * 团队二维码页面
+ * @Author   xjz
+ * @DateTime 2017-07-05
+ */
 .controller('GroupQrcodeCtrl', ['$scope', '$state', function ($scope, $state) {
   $scope.params = {
     team: {}
@@ -1149,9 +1725,21 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
     $scope.team = $state.params.team
   })
 }])
-// 添加成员
-.controller('GroupAddMemberCtrl', ['$scope', '$state', '$ionicHistory', 'arrTool', 'Communication', '$ionicLoading', '$rootScope', 'Patient', 'CONFIG', function ($scope, $state, $ionicHistory, arrTool, Communication, $ionicLoading, $rootScope, Patient, CONFIG) {
-    // get groupId via $state.params.groupId
+/**
+ * 拉人页面
+ * @Author   xjz
+ * @DateTime 2017-07-05
+ */
+.controller('GroupAddMemberCtrl', ['$scope', 'Storage', '$state', '$ionicHistory', 'arrTool', 'Communication', '$ionicLoading', '$rootScope', 'Patient', 'CONFIG', function ($scope, Storage, $state, $ionicHistory, arrTool, Communication, $ionicLoading, $rootScope, Patient, CONFIG) {
+  // $scope.searchStyle = {'margin-top': '44px'}
+  // if (ionic.Platform.isIOS()) {
+  //   $scope.searchStyle = {'margin-top': '64px'}
+  // }
+  // $scope.memStyle = {'padding': '3px 16px', 'position': 'absolute', 'top': '88px', 'height': '50px', 'width': '100%', 'margin': '0', 'max-height': '30vh', 'overflow-y': 'scroll'}
+  // if (ionic.Platform.isIOS()) {
+  //   $scope.memStyle = {'padding': '3px 16px', 'position': 'absolute', 'top': '108px', 'height': '50px', 'width': '100%', 'margin-top': '0px', 'max-height': '30vh', 'overflow-y': 'scroll'}
+  // }
+  // get groupId via $state.params.groupId
   $scope.moredata = true
   $scope.issearching = true
   $scope.isnotsearching = false
@@ -1161,14 +1749,28 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
   $scope.doctors = []
   $scope.alldoctors = []
   $scope.skipnum = 0
+  $scope.myid = Storage.get('UID')
+  /**
+   * 刷新
+   * @Author   xjz
+   * @DateTime 2017-07-05
+   * @param    {[type]}
+   * @return   {[type]}
+   */
   $scope.update = function (id) {
     if ($scope.doctors[id].check) $scope.group.members.push({ photoUrl: $scope.doctors[id].photoUrl, name: $scope.doctors[id].name, userId: $scope.doctors[id].userId })
     else $scope.group.members.splice(arrTool.indexOf($scope.group.members, 'userId', $scope.doctors[id].userId), 1)
   }
-
+  /**
+   * 底端加载
+   * @Author   xjz
+   * @DateTime 2017-07-05
+   * @return   {[type]}
+   */
   $scope.loadMore = function () {
     Patient.getDoctorLists({ skip: $scope.skipnum, limit: 10 })
             .then(function (data) {
+              console.log(data.results)
               $scope.$broadcast('scroll.infiniteScrollComplete')
 
               $scope.alldoctors = $scope.alldoctors.concat(data.results)
@@ -1181,50 +1783,91 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
               console.log(err)
             })
   }
+  /**
+   * 搜索医生
+   * @Author   zyh
+   * @DateTime 2017-07-05
+   * @return   {[type]}
+   */
   $scope.goSearch = function () {
     $scope.isnotsearching = true
     $scope.issearching = false
+
     $scope.moredata = false
     Patient.getDoctorLists({ skip: 0, limit: 10, name: $scope.search.name })
             .then(function (data) {
+              console.log(data.results)
               $scope.doctors = data.results
               if (data.results.length == 0) {
-                $ionicLoading.show({ template: '查无此人', duration: 1000 })
+                $ionicLoading.show({ template: '没有搜索到医生', duration: 1000 })
               }
             }, function (err) {
               console.log(err)
             })
   }
+    // $scope.closeSearch = function() {
+    //     $scope.issearching = true;
+    //     $scope.isnotsearching = false;
 
+    //     $scope.moredata = true;
+    //     $scope.doctors = $scope.alldoctors;
+    //     $scope.search.name = '';
+
+    // }
+    /**
+     * 圆×
+     * @Author   zyh
+     * @DateTime 2017-07-05
+     * @return   {[type]}
+     */
   $scope.clearSearch = function () {
     $scope.search.name = ''
-  }
+    $scope.issearching = true
+    $scope.isnotsearching = false
 
+    $scope.moredata = true
+    $scope.doctors = $scope.alldoctors
+    $scope.search.name = ''
+  }
+  /**
+   * 确定拉人
+   * @Author   xjz
+   * @DateTime 2017-07-05
+   * @return   {[type]}
+   */
   $scope.confirmAdd = function () {
     if ($state.params.type == 'new') {
       $rootScope.newMember = $rootScope.newMember.concat($scope.group.members)
       $ionicHistory.goBack()
     } else {
-      $ionicLoading.show({ template: '正在更新数据' })
       Communication.insertMember({ teamId: $state.params.teamId, members: $scope.group.members })
                 .then(function (data) {
+                  console.log(data.result)
                   if (data.result == '更新成员成功') {
                     $ionicLoading.show({ template: '添加成功', duration: 1000 })
                   }
                   setTimeout(function () { $ionicHistory.goBack() }, 1000)
-                }, function (err) {
-                  $ionicLoading.show({ template: '添加失败', duration: 2000 })
                 })
     }
   }
 }])
 
-// 团队聊天
-.controller('GroupChatCtrl', ['$scope', '$state', '$ionicHistory', '$ionicModal', '$ionicScrollDelegate', '$rootScope', '$ionicPopover', '$ionicPopup', 'Camera', 'voice', 'Communication', 'wechat', '$location', 'Doctor', 'Storage', '$q', 'CONFIG', 'arrTool', '$http', 'New', '$timeout', '$interval', function ($scope, $state, $ionicHistory, $ionicModal, $ionicScrollDelegate, $rootScope, $ionicPopover, $ionicPopup, Camera, voice, Communication, wechat, $location, Doctor, Storage, $q, CONFIG, arrTool, $http, New, $timeout, $interval) {
+/**
+ * 群聊界面
+ * @Author   xjz
+ * @DateTime 2017-07-05
+ */
+.controller('GroupChatCtrl', ['$ionicPlatform', '$scope', '$state', '$ionicHistory', '$http', '$ionicModal', '$ionicScrollDelegate', '$rootScope', '$stateParams', '$ionicPopover', '$ionicLoading', '$ionicPopup', 'Camera', 'voice', 'Communication', 'Storage', 'Doctor', '$q', 'CONFIG', 'arrTool', 'New', 'socket', 'notify', '$timeout', function ($ionicPlatform, $scope, $state, $ionicHistory, $http, $ionicModal, $ionicScrollDelegate, $rootScope, $stateParams, $ionicPopover, $ionicLoading, $ionicPopup, Camera, voice, Communication, Storage, Doctor, $q, CONFIG, arrTool, New, socket, notify, $timeout) {
+  if ($ionicPlatform.is('ios'))cordova.plugins.Keyboard.disableScroll(true)
+
+  // $scope.itemStyle = {'position': 'absolute', 'top': '44px', 'width': '100%', 'margin': '0', 'min-height': '35vh', 'max-height': '55vh', 'overflow-y': 'scroll'}
+  // if (ionic.Platform.isIOS()) {
+  //   $scope.itemStyle = {'position': 'absolute', 'top': '64px', 'width': '100%', 'margin': '0', 'min-height': '35vh', 'max-height': '55vh', 'overflow-y': 'scroll'}
+  // }
   $scope.input = {
     text: ''
   }
-  var path = $location.absUrl().split('#')[0]
+  $scope.photoUrls = {}
   $scope.params = {
     type: '', // '0':团队交流  '1': 未结束病历  '2':已结束病历
     groupId: '',
@@ -1236,120 +1879,89 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
     hidePanel: true,
     isDiscuss: false,
     isOver: false,
-    moreMsgs: true,
     UID: Storage.get('UID'),
-    newsType: '',
-    targetName: '',
+    newsType: '', // 消息字段
+    targetName: '', // 消息字段
+    moreMsgs: true,
     recording: false,
     loaded: false
   }
   $rootScope.patient = {}
+
   $scope.scrollHandle = $ionicScrollDelegate.$getByHandle('myContentScroll')
   function toBottom (animate, delay) {
     if (!delay) delay = 100
     $timeout(function () {
       $scope.scrollHandle.scrollBottom(animate)
-      $timeout(function () {
-        $scope.scrollHandle.resize()
-      }, 500)
-      $timeout(function () {
-        $scope.scrollHandle.resize()
-      }, 1000)
     }, delay)
   }
   $scope.$on('$ionicView.beforeEnter', function () {
     $scope.photoUrls = {}
     $rootScope.patient = {}
-
     $scope.msgs = []
+    $scope.imgIndex = 0  // 当前显示的图片在消息队列中的位置
+    $scope.imgPosition = 0
     $scope.params.msgCount = 0
     $scope.params.type = $state.params.type
     $scope.params.groupId = $state.params.groupId
     $scope.params.teamId = $state.params.teamId
     $scope.params.loaded = false
+    try {
+      notify.remove($scope.params.groupId)
+    } catch (e) {}
 
-    if ($scope.params.type == '0') {
-      $scope.params.newsType = '13'
-      Communication.getTeam({ teamId: $scope.params.teamId })
+    Doctor.doctor({userId: Storage.get('UID')})
             .then(function (data) {
-              $scope.params.team = data.results
-              $scope.params.title = $scope.params.team.name + '(' + $scope.params.team.number + ')'
-              $scope.params.targetName = $scope.params.team.name
-              getSponsor(data.results.sponsorId)
-              for (i = 0; i < data.results.members.length; i++) {
-                $scope.photoUrls[data.results.members[i].userId] = data.results.members[i].photoUrl
-              }
-              Doctor.getDoctorInfo({userId: data.results.sponsorId})
-                .then(function (sponsor) {
-                  $scope.photoUrls[sponsor.results.userId] = sponsor.results.photoUrl
-                })
+              thisDoctor = data.results
+              $scope.photoUrls[data.results.userId] = data.results.photoUrl
             })
-    } else {
+    if ($scope.params.type == '0') {
+      $scope.params.newsType = 13
+      Communication.getTeam({ teamId: $scope.params.teamId })
+                .then(function (data) {
+                  console.log(data)
+                  $scope.params.team = data.results
+                  $scope.params.title = $scope.params.team.name + '(' + $scope.params.team.number + ')'
+                  $scope.params.targetName = $scope.params.team.name
+                  getSponsor(data.results.sponsorId)
+                  for (i = 0; i < data.results.members.length; i++) {
+                    $scope.photoUrls[data.results.members[i].userId] = data.results.members[i].photoUrl
+                  }
+                })
+    } else if ($scope.params.type == '1') { // 进行中
       getConsultation()
-      $scope.params.newsType = $scope.params.teamId
+      $scope.params.newsType = 15
+      $scope.params.hidePanel = true
       $scope.params.title = '病历'
       $scope.params.isDiscuss = true
+    } else if ($scope.params.type == '2') { // 已处理
+      getConsultation()
+      $scope.params.newsType = 15
+      $scope.params.hidePanel = false
+      $scope.params.title = '病历'
+      $scope.params.isDiscuss = true
+      $scope.params.isOver = true
     }
   })
   $scope.$on('$ionicView.enter', function () {
-    wechat.settingConfig({ url: path }).then(function (data) {
-      config = data.results
-      config.jsApiList = ['startRecord', 'stopRecord', 'playVoice', 'chooseImage', 'uploadVoice', 'uploadImage']
-
-      wx.config({
-        debug: false,
-        appId: config.appId,
-        timestamp: config.timestamp,
-        nonceStr: config.nonceStr,
-        signature: config.signature,
-        jsApiList: config.jsApiList
-      })
-      wx.error(function (res) {
-        console.error(res)
-        alert(res.errMsg)
-      })
-    })
+    // if ($ionicPlatform.is('ios') == false)document.getElementById('inputbar').removeAttribute('keyboard-attach')
+    // console.log(document.getElementById('inputbar'))
+    console.log($scope.photoUrls)
+    $rootScope.conversation.type = 'group'
+    $rootScope.conversation.id = $scope.params.groupId
     var loadWatcher = $scope.$watch('params.loaded', function (newv, oldv) {
       if (newv) {
         loadWatcher()
         if ($scope.msgs.length == 0) return
-        var lastMsg = $scope.msgs[$scope.msgs.length - 1]
-        if (lastMsg.fromID == $scope.params.UID) return
-        return New.insertNews({ userId: $scope.params.UID, sendBy: lastMsg.targetID, type: $scope.params.newsType, readOrNot: 1 })
+        // var lastMsg = $scope.msgs[$scope.msgs.length - 1]
+        // if (lastMsg.fromID == $scope.params.UID) return
+        return New.insertNews({ userId: $scope.params.groupId, type: $scope.params.newsType, readOrNot: 1, userRole: 'doctor', caseType: $scope.params.teamId})
       }
     })
-    $rootScope.conversation.type = 'group'
-    $rootScope.conversation.id = $scope.params.groupId
-
-    Doctor.getDoctorInfo({userId: Storage.get('UID')})
-            .then(function (data) {
-              thisDoctor = data.results
-              socket.emit('newUser', {user_name: thisDoctor.name, user_id: $scope.params.UID, client: 'wechatdoctor'})
-              socket.on('getMsg', function (data) {
-                console.info('getMsg')
-                console.log(data)
-                if (data.msg.targetType == 'group' && data.msg.targetID == $state.params.groupId) {
-                  $scope.$apply(function () {
-                    insertMsg(data.msg)
-                  })
-                  New.insertNews({userId: $scope.params.UID, sendBy: $scope.params.groupId, type: $scope.params.newsType, readOrNot: 1})
-                }
-              })
-              socket.on('messageRes', function (data) {
-                console.info('messageRes')
-                console.log(data)
-                if (data.msg.targetType == 'group' && data.msg.targetID == $state.params.groupId) {
-                  $scope.$apply(function () {
-                    insertMsg(data.msg)
-                  })
-                }
-              })
-            })
     imgModalInit()
-    $scope.getMsg(10).then(function (data) {
+    $scope.getMsg(15).then(function (data) {
       $scope.msgs = data
-      toBottom(true, 500)
-                // toBottom(true,800);
+      toBottom(true, 400)
       $scope.params.loaded = true
     })
   })
@@ -1360,11 +1972,9 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
   })
   $scope.$on('keyboardhide', function (event) {
     $scope.params.helpDivHeight = 0
+    $scope.scrollHandle.resize()
   })
   $scope.$on('$ionicView.beforeLeave', function () {
-    socket.off('messageRes')
-    socket.off('getMsg')
-    socket.emit('disconnect')
     if ($scope.popover) $scope.popover.hide()
     if ($scope.modal) $scope.modal.remove()
   })
@@ -1373,20 +1983,42 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
     $rootScope.conversation.type = null
     $rootScope.conversation.id = ''
   })
+  $scope.$on('im:getMsg', function (event, data) {
+    console.info('getMsg')
+    console.log(data)
+    if (data.msg.targetType == 'group' && data.msg.targetID == $state.params.groupId) {
+      $scope.$apply(function () {
+        insertMsg(data.msg)
+      })
+      New.insertNews({userId: $state.params.groupId, type: $scope.params.newsType, readOrNot: 1, userRole: 'doctor', caseType: $scope.params.teamId})
+    }
+  })
+  $scope.$on('im:messageRes', function (event, data) {
+    console.info('messageRes')
+    console.log(data)
+    if (data.msg.targetType == 'group' && data.msg.targetID == $state.params.groupId) {
+      var temppos = arrTool.indexOf($scope.msgs, 'createTimeInMillis', data.msg.createTimeInMillis)
+      if (!(temppos != -1 && $scope.msgs[temppos].status == 'send_success')) {
+        console.log('newMsg')
+        $scope.$apply(function () {
+          insertMsg(data.msg)
+        })
+      }
+    }
+  })
+  /**
+   * 获取病例讨论结论
+   * @Author   xjz
+   * @DateTime 2017-07-05
+   * @return   {[type]}
+   */
   function getConsultation () {
     Communication.getConsultation({ consultationId: $scope.params.groupId })
         .then(function (data) {
           $scope.viewChat = viewChatFn(data.result.sponsorId.userId, data.result.patientId.userId)
           $scope.params.title += '-' + data.result.patientId.name
+          console.log(data)
           $rootScope.patient = data.result
-          $scope.params.type = data.result.status
-          if ($scope.params.type == 1) {
-            $scope.params.hidePanel = true
-          } else {
-            $scope.params.hidePanel = false
-            $rootScope.patient.undergo = false
-            $scope.params.isOver = true
-          }
           Communication.getTeam({ teamId: $scope.params.teamId })
                 .then(function (res) {
                   $scope.params.team = res.results
@@ -1398,26 +2030,29 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
                 })
         })
   }
+  /**
+   * 查看病例讨论前的聊天记录
+   * @Author   xjz
+   * @DateTime 2017-07-05
+   * @param    {[type]}
+   * @param    {[type]}
+   * @return   {[type]}
+   */
   function viewChatFn (DID, PID) {
     return function () {
-      $state.go('tab.view-chat', {doctorId: DID, patientId: PID})
+      $state.go('tab.view-chat', {doctorId: DID, patientId: PID, groupId: $scope.params.groupId, teamId: $scope.params.teamId})
     }
   }
   function getSponsor (id) {
-    Doctor.getDoctorInfo({userId: id})
+    Doctor.doctor({userId: id})
             .then(function (sponsor) {
               $scope.photoUrls[sponsor.results.userId] = sponsor.results.photoUrl
             })
   }
   $scope.DisplayMore = function () {
-    $scope.getMsg(10).then(function (data) {
+    $scope.getMsg(15).then(function (data) {
       $scope.msgs = data
     })
-  }
-  $scope.scrollBottom = function () {
-    $scope.showVoice = false
-    $scope.showMore = false
-    toBottom(true)
   }
   function noMore () {
     $scope.params.moreMsgs = false
@@ -1427,6 +2062,12 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
       })
     }, 5000)
   }
+  $scope.scrollBottom = function () {
+    $scope.showVoice = false
+    $scope.showMore = false
+    $scope.scrollHandle.scrollBottom(true)
+  }
+
   $scope.getMsg = function (num) {
     console.log('getMsg:' + num)
     return $q(function (resolve, reject) {
@@ -1449,7 +2090,6 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
               if (res.length == 0) $scope.params.moreMsgs = false
               else {
                 $scope.params.msgCount += res.length
-                    // $scope.$apply(function() {
                 if ($scope.msgs.length != 0) $scope.msgs[0].diff = ($scope.msgs[0].time - res[0].time) > 300000
                 for (var i = 0; i < res.length - 1; ++i) {
                   if (res[i].contentType == 'image') res[i].content.thumb = CONFIG.mediaUrl + res[i].content['src_thumb']
@@ -1460,8 +2100,6 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
                 res[i].direct = res[i].fromID == $scope.params.UID ? 'send' : 'receive'
                 res[i].diff = true
                 $scope.msgs.unshift(res[i])
-                        // $scope.msgs[0].diff = true;
-                    // });
               }
               console.log($scope.msgs)
               resolve($scope.msgs)
@@ -1479,6 +2117,18 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
     $state.go('tab.group-detail', {teamId: $scope.params.teamId})
   }
 
+        // 长按工具条
+    // var options = [{
+    //     name: '转发医生',
+    // }, {
+    //     name: '转发团队',
+    // }]
+    // $ionicPopover.fromTemplateUrl('partials/others/toolbox-pop.html', {
+    //     scope: $scope,
+    // }).then(function(popover) {
+    //     $scope.options = options;
+    //     $scope.popover = popover;
+    // });
   $scope.$on('holdmsg', function (event, args) {
     event.stopPropagation()
   })
@@ -1491,40 +2141,66 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
       scope: $scope
     }).then(function (modal) {
       $scope.modal = modal
-            // $scope.modal.show();
       $scope.imageHandle = $ionicScrollDelegate.$getByHandle('imgScrollHandle')
     })
   }
   $scope.closeModal = function () {
     $scope.imageHandle.zoomTo(1, true)
     $scope.modal.hide()
-        // $scope.modal.remove()
   }
   $scope.switchZoomLevel = function () {
     if ($scope.imageHandle.getScrollPosition().zoom != $scope.zoomMin) { $scope.imageHandle.zoomTo(1, true) } else {
       $scope.imageHandle.zoomTo(5, true)
     }
   }
+  $scope.onSwipeRight = function () {
+    if ($scope.imageHandle.getScrollPosition().zoom === $scope.zoomMin) {  // 没有缩放时才允许切换
+      $scope.imgIndex--
+      if ($scope.imgIndex >= 0) {
+        if ($scope.msgs[$scope.imgIndex].contentType === 'image') {
+          $scope.imgPosition = $scope.imgIndex
+          $scope.imageUrl = (CONFIG.mediaUrl + ($scope.msgs[$scope.imgIndex].content.src || $scope.msgs[$scope.imgIndex].content.src_thumb))
+        } else {
+          $scope.onSwipeRight()
+        }
+      } else { $scope.imgIndex = $scope.imgPosition }
+    }
+  }
+  $scope.onSwipeLeft = function () {
+    if ($scope.imageHandle.getScrollPosition().zoom === $scope.zoomMin) {  // 没有缩放时才允许切换
+      $scope.imgIndex++
+      if ($scope.imgIndex < $scope.msgs.length) {
+        if ($scope.msgs[$scope.imgIndex].contentType === 'image') {
+          $scope.imgPosition = $scope.imgIndex
+          $scope.imageUrl = (CONFIG.mediaUrl + ($scope.msgs[$scope.imgIndex].content.src || $scope.msgs[$scope.imgIndex].content.src_thumb))
+        } else {
+          $scope.onSwipeLeft()
+        }
+      } else { $scope.imgIndex = $scope.imgPosition }
+    }
+  }
 
   $scope.$on('voice', function (event, args) {
+    console.log(args)
     event.stopPropagation()
-    $scope.params.audio = args[1]
-    wx.downloadVoice({
-      serverId: args[1].mediaId, // 需要下载的音频的服务器端ID，由uploadVoice接口获得
-      isShowProgressTips: 0, // 默认为1，显示进度提示
-      success: function (res) {
-                // var localId = res.localId; // 返回音频的本地ID
-        wx.playVoice({
-          localId: res.localId// 需要播放的音频的本地ID，由stopRecord接口获得
-        })
-      }
-    })
+    $scope.sound = new Media(args[1],
+            function () {
+                // resolve(audio.media)
+            },
+            function (err) {
+              console.log(err)
+                // reject(err);
+            })
+    $scope.sound.play()
   })
 
   $scope.$on('image', function (event, args) {
+    console.log(args)
     event.stopPropagation()
     $scope.imageHandle.zoomTo(1, true)
-    $scope.imageUrl = CONFIG.mediaUrl + (args[2].src || args[2].src_thumb)
+    $scope.imgIndex = $scope.msgs.indexOf(args[2])
+    $scope.imgPosition = $scope.imgIndex
+    $scope.imageUrl = args[2].content.localPath || (CONFIG.mediaUrl + (args[2].content.src || args[2].content.src_thumb))
     $scope.modal.show()
   })
   $scope.$on('profile', function (event, args) {
@@ -1533,7 +2209,9 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
       $state.go('tab.group-profile', { memberId: args[1].fromID })
     }
   })
+
   $scope.$on('viewcard', function (event, args) {
+    console.log(args[1])
     event.stopPropagation()
 
     if ($scope.params.type == '0') {
@@ -1545,6 +2223,31 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
                 })
     }
   })
+  /**
+   * 事件：点击重发
+   * @Author   zyh
+   * @DateTime 2017-09-30
+   * @param    {object}   event    事件
+   * @param    {array}    args     ['resend',msg.createTimeInMillis]
+   * @return   {null}
+   */
+  $scope.$on('resend', function (event, args) {
+    event.stopPropagation()
+    $scope.resendid = args[1]
+    console.log(args)
+    var pos = arrTool.indexOf($scope.msgs, 'createTimeInMillis', args[1])
+    if (pos != -1 && $scope.msgs[pos].status == 'send_fail') $scope.msgs[pos].status = 'send_going'
+    socket.emit('message', {msg: $scope.msgs[pos], to: $scope.params.groupId, role: 'doctor'})
+    $timeout(function () {
+      if (pos != -1 && $scope.msgs[pos].status == 'send_going') $scope.msgs[pos].status = 'send_fail'
+    }, 10000)
+    // insertMsg($scope.msgs[pos])
+  })
+
+    // $scope.toolChoose = function(data) {
+    //     if (data == 0) $state.go('tab.selectDoc');
+    //     if (data == 1) $state.go('tab.selectTeam');
+    // }
 
   $scope.viewPatient = function (pid) {
     Storage.set('getpatientId', pid)
@@ -1557,17 +2260,20 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
     Storage.set('groupChatParams', JSON.stringify(statep))
     $state.go('tab.patientDetail')
   }
-  $scope.updateMsg = function (msg) {
+  /**
+   * 下面几个是发消息相关、上传语音图片
+   * @Author   xjz
+   * @DateTime 2017-07-05
+   */
+  $scope.updateMsg = function (msg, pos) {
     console.info('updateMsg')
-
-    if (msg.contentType == 'image') msg.content.thumb = CONFIG.mediaUrl + msg.content['src_thumb']
-            // msg.diff=$scope.msgs[pos].diff;
-    msg.direct = msg.fromID == $scope.params.UID ? 'send' : 'receive'
     if (pos == 0) {
       msg.diff = true
     } else if (msg.hasOwnProperty('time') && $scope.msgs[pos - 1].hasOwnProperty('time')) {
       msg.diff = (msg.time - $scope.msgs[pos - 1].time) > 300000
     }
+    msg.content.src = $scope.msgs[pos].content.src
+    msg.direct = $scope.msgs[pos].direct
     $scope.msgs[pos] = msg
   }
   $scope.pushMsg = function (msg) {
@@ -1583,19 +2289,15 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
         }
       }
     }
-    msg.direct = msg.fromID == $scope.params.UID ? 'send' : 'receive'
-    if (msg.contentType == 'image') {
-      msg.content.thumb = CONFIG.mediaUrl + msg.content['src_thumb']
-      $http.get(msg.content.thumb).then(function (data) {
-        $scope.msgs.push(msg)
-        toBottom(true, 600)
-        $scope.params.msgCount++
-      })
-    } else {
-      $scope.msgs.push(msg)
-      toBottom(true, 200)
-      $scope.params.msgCount++
-    }
+    $scope.params.msgCount++
+    $scope.msgs.push(msg)
+    toBottom(true, 200)
+    toBottom(true, 600)
+    // var waittime = msg.contentType === 'image' ? 10000 : 5000
+    $timeout(function () {
+      var pos = arrTool.indexOf($scope.msgs, 'createTimeInMillis', msg.createTimeInMillis)
+      if (pos != -1 && $scope.msgs[pos].status == 'send_going') $scope.msgs[pos].status = 'send_fail'
+    }, 10000)
   }
   function insertMsg (msg) {
     var pos = arrTool.indexOf($scope.msgs, 'createTimeInMillis', msg.createTimeInMillis)
@@ -1605,7 +2307,7 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
       $scope.updateMsg(msg, pos)
     }
   }
-  function sendmsg (content, type) {
+  function msgGen (content, type) {
     var data = {}
     if (type == 'text') {
       data = {
@@ -1613,19 +2315,16 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
       }
     } else if (type == 'image') {
       data = {
-        mediaId: content[0],
-        mediaId_thumb: content[1],
-        src: '',
-        src_thumb: ''
+        src: content[0],
+        src_thumb: content[1]
       }
     } else if (type == 'voice') {
       data = {
-        mediaId: content,
-        src: ''
+        src: content
       }
     }
     var msgJson = {
-      clientType: 'wechatdoctor',
+      clientType: 'doctor',
       contentType: type,
       fromID: $scope.params.UID,
       fromName: thisDoctor.name,
@@ -1642,134 +2341,172 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
       targetRole: 'doctor',
       content: data
     }
-    console.info('socket.connected' + socket.connected)
-    console.log(msgJson)
-    socket.emit('message', {msg: msgJson, to: $scope.params.groupId, role: 'doctor'})
-  }
-  function onSendSuccess (res) {
-    console.log(res)
-    viewUpdate(10)
+    return msgJson
   }
 
-  function onSendErr (err) {
-    console.log(err)
-    alert('[send msg]:err')
-    viewUpdate(20)
+  function localMsgGen (msg, url) {
+    var d = {},
+      type = msg.contentType
+    if (type == 'image') {
+      d.src = msg.content.src
+      d.src_thumb = msg.content.src_thumb
+      d.localPath = url
+    } else if (type == 'voice') {
+      d.localPath = url
+      d.src = msg.content.src
+    }
+    return {
+      clientType: 'doctor',
+      contentType: type,
+      fromID: msg.fromID,
+      fromName: msg.fromName,
+      fromUser: msg.fromUser,
+      targetID: msg.targetID,
+      teamId: msg.teamId,
+      targetName: msg.targetName,
+      targetType: 'group',
+      status: 'send_going',
+      createTimeInMillis: msg.createTimeInMillis,
+      newsType: msg.newsType,
+      content: d
+    }
   }
+
+  function sendmsg (content, type) {
+    var msgJson = msgGen(content, type)
+    console.info('[socket.connected]', socket.connected)
+    socket.emit('message', {msg: msgJson, to: $scope.params.groupId, role: 'doctor'})
+    $scope.pushMsg(msgJson)
+        // toBottom(true);
+  }
+
   $scope.submitMsg = function () {
     sendmsg($scope.input.text, 'text')
     $scope.input.text = ''
   }
-
-    // get image
+        // get image
   $scope.getImage = function (type) {
     $scope.showMore = false
-    var ids = ['', '']
-    if (type == 'cam') var st = ['camera']
-    else var st = ['album']
-    wx.chooseImage({
-      count: 1, // 默认9
-      sizeType: ['original', 'compressed'], // 可以指定是原图还是压缩图，默认二者都有
-      sourceType: st, // 可以指定来源是相册还是相机，默认二者都有
-      success: function (response) {
-        console.log(response)
-        ids = ids.concat(response.localIds)
-        wx.uploadImage({
-          localId: response.localIds[0], // 需要上传的图片的本地ID，由chooseImage接口获得
-          isShowProgressTips: 0, // 默认为1，显示进度提示
-          success: function (res) {
-            console.log(res)
-            ids[0] = res.serverId // 返回图片的服务器端ID
-            sendmsg(ids, 'image')
-          }
-        })
-                // wx.uploadImage({
-                //     localId: response.localIds[1], // 需要上传的图片的本地ID，由chooseImage接口获得
-                //     isShowProgressTips: 0, // 默认为1，显示进度提示
-                //     success: function (res) {
-                //         console.log(res);
-                //         ids[1]=res.serverId; // 返回图片的服务器端ID
-                //         if(count) sendmsg(ids,'image');
-                //         else count++;
-                //         // sendmsg(serverId,'image');
-                //     }
-                // });
-      }
-    })
+    Camera.getPicture(type, true)
+            .then(function (url) {
+              console.log(url)
+              var fm = md5(Date.now(), $scope.params.chatId) + '.jpg',
+                d = [
+                  'uploads/photos/' + fm,
+                  'uploads/photos/resized' + fm
+                ],
+                imgMsg = msgGen(d, 'image'),
+                localMsg = localMsgGen(imgMsg, url)
+              $scope.pushMsg(localMsg)
+              Camera.uploadPicture(url, fm)
+                    .then(function () {
+                      socket.emit('message', {msg: imgMsg, to: $scope.params.groupId, role: 'doctor'})
+                    }, function () {
+                      $ionicLoading.show({ template: '图片上传失败', duration: 2000 })
+                    })
+            }, function (err) {
+              console.error(err)
+            })
   }
-
-    // get voice
-
+        // get voice
   $scope.getVoice = function () {
-    wx.startRecord()
+        // voice.record() does 2 things: record --- file manipulation
+    voice.record()
+            .then(function (fileUrl) {
+              window.JMessage.sendGroupVoiceMessageWithExtras($scope.params.groupId, fileUrl, $scope.msgExtra,
+                    function (res) {
+                      console.log(res)
+                      $scope.params.recording = false
+                      Communication.postCommunication({messageType: 2, sendBy: Storage.get('UID'), receiver: $scope.params.groupId, content: JSON.parse(res)})
+                                  .then(function (data) {
+                                    console.log(data)
+                                  }, function (err) {
+                                    console.error(err)
+                                  })
+                    },
+                    function (err) {
+                      console.log(err)
+                    })
+            }, function (err) {
+              console.log(err)
+            })
     $scope.params.recording = true
   }
   $scope.stopAndSend = function () {
-    wx.stopRecord({
-      success: function (res) {
-        var ids = ['', res.localId]
-        var m = msgGen(ids, 'voice', true)
-        $scope.pushMsg(m)
-        $scope.params.recording = false
-        toBottom(true)
-        wx.uploadVoice({
-          localId: res.localId, // 需要上传的图片的本地ID，由chooseImage接口获得
-          isShowProgressTips: 0, // 默认为1，显示进度提示
-          success: function (response) {
-            console.log(response)
-            ids[0] = response.serverId
-                        // var serverId = res.serverId; // 返回图片的服务器端ID
-            sendmsg(ids, 'voice')
-          }
-        })
-      }
-    })
+    voice.stopRec()
   }
+  /**
+   * 去病例讨论页面
+   * @Author   xjz
+   * @DateTime 2017-07-05
+   * @return   {[type]}
+   */
   $scope.goChats = function () {
-    console.log($ionicHistory)
-    console.log($scope.params)
+    // console.log($ionicHistory)
+    // console.log($scope.params)
 
     $ionicHistory.nextViewOptions({
       disableBack: true
     })
-    if ($scope.params.type == '0') $state.go('tab.groups', { type: '0' })
-    else $state.go('tab.group-patient', { teamId: $scope.params.teamId })
+    if ($ionicHistory.backView().title == '消息中心')$ionicHistory.goBack()
+    else {
+      if ($scope.params.type == '0') $state.go('tab.groups', { type: '0' })
+      else $state.go('tab.group-patient', { teamId: $scope.params.teamId })
+    }
   }
+  /**
+   * 去病历结论页面
+   * @Author   zyh
+   * @DateTime 2017-07-05
+   * @return   {[type]}
+   */
   $scope.goConclusion = function () {
     $state.go('tab.group-conclusion', {groupId: $scope.params.groupId, teamId: $scope.params.teamId})
   }
 }])
-// 病历结论
-.controller('GroupConclusionCtrl', ['$state', '$scope', '$ionicModal', '$ionicScrollDelegate', 'Communication', '$ionicLoading', 'CONFIG', 'Account', 'Counsel', 'wechat', function ($state, $scope, $ionicModal, $ionicScrollDelegate, Communication, $ionicLoading, CONFIG, Account, Counsel, wechat) {
+/**
+ * 病历结论页面
+ * @Author   zyh
+ * @DateTime 2017-07-05
+ */
+.controller('GroupConclusionCtrl', ['$state', '$scope', '$ionicModal', '$ionicScrollDelegate', 'Communication', '$ionicLoading', 'CONFIG', 'Storage', 'Account', 'socket', 'mySocket', 'Counsel', 'Mywechat', function ($state, $scope, $ionicModal, $ionicScrollDelegate, Communication, $ionicLoading, CONFIG, Storage, Account, socket, mySocket, Counsel, Mywechat) {
   $scope.input = {
     text: ''
   }
   $scope.params = {
     type: '',
     groupId: '',
-    teamId: ''
+    teamId: '',
+    chatId: '' /// 回复患者讨论结论
   }
 
   $scope.patient = {}
+
   $scope.$on('$ionicView.beforeEnter', function () {
     $scope.input.text = ''
-    $scope.params.type = $state.params.type
     $scope.params.groupId = $state.params.groupId
     $scope.params.teamId = $state.params.teamId
-    Communication.getConsultation({ consultationId: $scope.params.groupId })
+    Communication.getConsultation({ consultationId: $state.params.groupId })
             .then(function (data) {
               $scope.patient = data.result
             })
   })
-
+  /**
+   * 保存结论
+   * @Author   xjz
+   * @DateTime 2017-07-05
+   * @return   {[type]}
+   */
   $scope.save = function () {
     Communication.conclusion({ consultationId: $state.params.groupId, conclusion: $scope.input.text})
             .then(function (data) {
+              console.log(data)
               Communication.getCounselReport({ counselId: $scope.patient.diseaseInfo.counselId })
                     .then(function (res) {
-                      var DID = res.results.doctorId.userId, PID = res.results.patientId.userId
+                      var DID = res.results.doctorId.userId,
+                        PID = res.results.patientId.userId
                       var msgJson = {
-                        clientType: 'wechatdoctor',
+                        clientType: 'doctor',
                         contentType: 'text',
                         fromID: DID,
                         fromName: res.results.doctorId.name,
@@ -1780,63 +2517,98 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
                         targetName: res.results.patientId.name,
                         targetType: 'single',
                         status: 'send_going',
-                        newsType: '11',
-                        targetRole: 'patient',
+                        newsType: 11,
                         createTimeInMillis: Date.now(),
+                        targetRole: 'patient',
                         content: {
                           text: $scope.input.text
 
                         }
                       }
-                      var actionUrl = 'https://open.weixin.qq.com/connect/oauth2/authorize?appid=wxb830b12dc0fa74e5&redirect_uri=http://proxy.haihonghospitalmanagement.com/go&response_type=code&scope=snsapi_userinfo&state=patient_11_1_' + DID + '_' + res.results.counselId + '&#wechat_redirect'
-                      var template = {
-                        'userId': PID, // 患者的UID
-                        'role': 'patient',
-                        'postdata': {
-                          'template_id': 'N_0kYsmxrQq-tfJhGUo746G8Uem6uHZgK138HIBKI2I',
-                          'url': actionUrl,
-                          'data': {
-                            'first': {
-                              'value': '您的' + (res.results.type == 1 ? '咨询' : '问诊') + res.results.symptom + '已被回复！', // XXX取那个咨询或问诊的标题
-                              'color': '#173177'
-                            },
-                            'keyword1': {
-                              'value': res.results.help, // 咨询的问题
-                              'color': '#173177'
-                            },
-                            'keyword2': {
-                              'value': $scope.input.text, // 医生的回复
-                              'color': '#173177'
-                            },
-                            'keyword3': {
-                              'value': res.results.doctorId.name, // 回复医生的姓名
-                              'color': '#173177'
-                            },
-                            'remark': {
-                              'value': '感谢您的使用！',
-                              'color': '#173177'
+                      if (res.results.type == 2 || res.results.type == 3) {
+                            // 暂时把socket连接指向DID，用于此条消息的发送。之后call resetUserAsAppUser改回APP使用者
+                            // var resetUserAsAppUser = mySocket.newUserForTempUse(DID,res.results.doctorId.name);
+                            // socket.emit('newUser', { user_name: res.results.doctorId.name, user_id: DID });
+                        var actionUrl = 'https://open.weixin.qq.com/connect/oauth2/authorize?appid=wxb830b12dc0fa74e5&redirect_uri=http://proxy.haihonghospitalmanagement.com/go&response_type=code&scope=snsapi_userinfo&state=patient_11_1_' + DID + '_' + res.results.counselId + '&#wechat_redirect'
+                        var template = {
+                          'userId': PID, // 患者的UID
+                          'role': 'patient',
+                          'postdata': {
+                            'template_id': 'N_0kYsmxrQq-tfJhGUo746G8Uem6uHZgK138HIBKI2I',
+                            'url': actionUrl,
+                            'data': {
+                              'first': {
+                                'value': '您的问诊' + res.results.symptom + '已被回复！', // XXX取那个咨询或问诊的标题
+                                'color': '#173177'
+                              },
+                              'keyword1': {
+                                'value': res.results.help, // 咨询的问题
+                                'color': '#173177'
+                              },
+                              'keyword2': {
+                                'value': $scope.input.text, // 医生的回复
+                                'color': '#173177'
+                              },
+                              'keyword3': {
+                                'value': res.results.doctorId.name, // 回复医生的姓名
+                                'color': '#173177'
+                              },
+                              'remark': {
+                                'value': '感谢您的使用！',
+                                'color': '#173177'
+                              }
                             }
                           }
                         }
-                      }
-                      wechat.messageTemplate(template)
-                      if (res.results.type != '1') {
-                        socket.emit('newUser', { user_name: res.results.doctorId.name, user_id: DID, client: 'wechatdoctor'})
+                        Mywechat.messageTemplate(template)
                         socket.emit('message', { msg: msgJson, to: PID, role: 'doctor'})
-                            // socket.on('messageRes', function(data) {
-                            // socket.off('messageRes');
+                            // resetUserAsAppUser();
+
                         $ionicLoading.show({ template: '回复成功'})
-                        socket.emit('disconnect')
                         setTimeout(function () {
                           $ionicLoading.hide()
                           $state.go('tab.groups', { type: '0' })
                         }, 1000)
-                      } else {
+                      } else if (res.results.type == 6 || res.results.type == 7 || res.results.type == 1) {
+                        var actionUrl = 'https://open.weixin.qq.com/connect/oauth2/authorize?appid=wxb830b12dc0fa74e5&redirect_uri=http://proxy.haihonghospitalmanagement.com/go&response_type=code&scope=snsapi_userinfo&state=patient_11_1_' + DID + '_' + res.results.counselId + '&#wechat_redirect'
+                        var template = {
+                          'userId': PID, // 患者的UID
+                          'role': 'patient',
+                          'postdata': {
+                            'template_id': 'N_0kYsmxrQq-tfJhGUo746G8Uem6uHZgK138HIBKI2I',
+                            'url': actionUrl,
+                            'data': {
+                              'first': {
+                                'value': '您的' + (res.results.type == 1 ? '咨询' : '加急咨询') + res.results.symptom + '已被回复！', // XXX取那个咨询或问诊的标题
+                                'color': '#173177'
+                              },
+                              'keyword1': {
+                                'value': res.results.help, // 咨询的问题
+                                'color': '#173177'
+                              },
+                              'keyword2': {
+                                'value': $scope.input.text, // 医生的回复
+                                'color': '#173177'
+                              },
+                              'keyword3': {
+                                'value': res.results.doctorId.name, // 回复医生的姓名
+                                'color': '#173177'
+                              },
+                              'remark': {
+                                'value': '感谢您的使用！',
+                                'color': '#173177'
+                              }
+                            }
+                          }
+                        }
+                        Mywechat.messageTemplate(template)
+
                         Account.modifyCounts({doctorId: DID, patientId: PID, modify: '-1'})
                             .then(function () {
                               Account.getCounts({doctorId: DID, patientId: PID})
                                 .then(function (response) {
-                                  socket.emit('newUser', { user_name: res.results.doctorId.name, user_id: DID, client: 'wechatdoctor'})
+                                    // var resetUserAsAppUser = mySocket.newUserForTempUse(DID,res.results.doctorId.name);
+                                    // socket.emit('newUser', { user_name: res.results.doctorId.name, user_id: DID });
                                   socket.emit('message', { msg: msgJson, to: PID, role: 'doctor'})
 
                                   if (response.result.count <= 0) {
@@ -1846,9 +2618,14 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
                                       docId: DID,
                                       counseltype: 1,
                                       counselId: $scope.patient.diseaseInfo.counselId
+
+                                    }
+                                    if (res.results.type == 6 || res.results.type == 7) {
+                                      endlMsg.info = '加急咨询已结束'
+                                      endlMsg.counseltype = 6
                                     }
                                     var endJson = {
-                                      clientType: 'wechatdoctor',
+                                      clientType: 'doctor',
                                       contentType: 'custom',
                                       fromID: DID,
                                       fromName: res.results.doctorId.name,
@@ -1860,14 +2637,14 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
                                       targetType: 'single',
                                       status: 'send_going',
                                       createTimeInMillis: Date.now(),
+                                      newsType: 11,
                                       targetRole: 'patient',
-                                      newsType: '11',
                                       content: endlMsg
                                     }
                                     socket.emit('message', { msg: endJson, to: PID, role: 'doctor'})
                                     Counsel.changeStatus({doctorId: DID, patientId: PID, type: res.results.type, status: 0})
                                   }
-                                  socket.emit('disconnect')
+                                    // resetUserAsAppUser();
                                   $ionicLoading.show({ template: '回复成功'})
                                   setTimeout(function () {
                                     $ionicLoading.hide()
@@ -1881,19 +2658,19 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
               console.log(err)
             })
   }
-
-  $scope.$on('$ionicView.leave', function () {
-    if ($scope.modal) $scope.modal.remove()
-  })
 }])
-.controller('selectDocCtrl', ['$state', '$scope', 'JM', '$ionicPopup', '$ionicLoading', '$ionicScrollDelegate', 'Patient', 'Storage', 'CONFIG', 'wechat', function ($state, $scope, JM, $ionicPopup, $ionicLoading, $ionicScrollDelegate, Patient, Storage, CONFIG, wechat) {
+/**
+ * 选择转发的医生
+ * @Author   xjz
+ * @DateTime 2017-07-05
+ */
+.controller('selectDocCtrl', ['$state', '$scope', '$ionicPopup', '$ionicLoading', '$ionicScrollDelegate', 'Patient', 'Storage', 'Communication', 'CONFIG', 'Mywechat', 'socket', function ($state, $scope, $ionicPopup, $ionicLoading, $ionicScrollDelegate, Patient, Storage, Communication, CONFIG, Mywechat, socket) {
   $scope.params = {
     moredata: true,
     skip: 0,
     limit: 20,
     query: '',
-    isSearch: false,
-    preKey: ''
+    isSearch: false
   }
   var allDoctors = []
   $scope.doctors = []
@@ -1903,9 +2680,6 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
     $scope.params.isSearch = false
   })
 
-  $scope.listenenter = function () {
-
-  }
   $scope.loadMore = function () {
     Patient.getDoctorLists({ skip: $scope.params.skip, limit: $scope.params.limit })
             .then(function (data) {
@@ -1923,30 +2697,31 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
     if ($scope.params.query == '') {
       $scope.doctors = allDoctors
       $scope.params.isSearch = false
-            // angular.element('#searchBox').focus();
     }
   })
+
   $scope.docSearch = function () {
     if (!$scope.params.isSearch) {
       $ionicLoading.show()
       Patient.getDoctorLists({ skip: 0, limit: 100, name: $scope.params.query })
-            .then(function (data) {
-              if (data.results.length == 0) {
-                $ionicLoading.show({ template: '结果为空', duration: 1000 })
-              } else {
-                $ionicLoading.hide()
-                allDoctors = $scope.doctors
-                $scope.doctors = data.results
-                $scope.params.isSearch = true
-              }
-            }, function (err) {
-              console.log(err)
-            })
+                .then(function (data) {
+                  if (data.results.length == 0) {
+                    $ionicLoading.show({ template: '结果为空', duration: 1000 })
+                  } else {
+                    $ionicLoading.hide()
+                    allDoctors = $scope.doctors
+                    $scope.doctors = data.results
+                    $scope.params.isSearch = true
+                  }
+                }, function (err) {
+                  console.log(err)
+                })
     } else {
       $scope.doctors = allDoctors
       $scope.params.query = ''
     }
   }
+
   $scope.sendTo = function (doc) {
     var confirmPopup = $ionicPopup.confirm({
       title: '转发给：' + doc.name,
@@ -1957,10 +2732,10 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
     confirmPopup.then(function (res) {
       if (res) {
         var msgdata = $state.params.msg
-        msgdata.fromId = thisDoctor.userId
+        msgdata.fromId = Storage.get('UID')
         msgdata.targetId = doc.userId
         var msgJson = {
-          clientType: 'wechatdoctor',
+          clientType: 'doctor',
           contentType: 'custom',
           fromID: thisDoctor.userId,
           fromName: thisDoctor.name,
@@ -1972,23 +2747,23 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
           targetType: 'single',
           status: 'send_going',
           createTimeInMillis: Date.now(),
-          newsType: '12',
+          newsType: 12,
           targetRole: 'doctor',
           content: msgdata
         }
-        socket.emit('newUser', {user_name: thisDoctor.name, user_id: thisDoctor.userId, client: 'wechatdoctor'})
+                // socket.emit('newUser',{user_name:thisDoctor.name,user_id:thisDoctor.userId});
         socket.emit('message', {msg: msgJson, to: doc.userId, role: 'doctor'})
-        socket.on('messageRes', function (messageRes) {
+        var listener = $scope.$on('im:messageRes', function (event, messageRes) {
           if (messageRes.msg.createTimeInMillis != msgJson.createTimeInMillis) return
           var csl = messageRes.msg.content.counsel
-          socket.off('messageRes')
-          socket.emit('disconnect')
+          listener()
+                    // socket.emit('disconnect');
           var actionUrl = 'https://open.weixin.qq.com/connect/oauth2/authorize?appid=wxfa2216ac422fb747&redirect_uri=http://proxy.haihonghospitalmanagement.com/go&response_type=code&scope=snsapi_userinfo&state=doctor_12_2_' + Storage.get('UID') + '_doctor' + '&#wechat_redirect'
           var template = {
             'userId': doc.userId, // 医生的UID
             'role': 'doctor',
             'postdata': {
-              'template_id': 'cVLIgOb_JvtFGQUA2KvwAmbT5B3ZB79cRsAM4ZKKK0k',
+              'template_id': 'DWrM__2UuaLxYf5da6sKOQA_hlmYhlsazsaxYX59DtE',
               'url': actionUrl,
               'data': {
                 'first': {
@@ -2019,17 +2794,26 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
               }
             }
           }
-          wechat.messageTemplate(template)
+          Mywechat.messageTemplate(template)
           $state.go('tab.detail', { type: '2', chatId: doc.userId, counselId: msgdata.counselId})
         })
       }
     })
   }
 }])
-.controller('selectTeamCtrl', ['$state', '$scope', '$ionicPopup', 'Doctor', 'Communication', 'Storage', 'CONFIG', '$filter', function ($state, $scope, $ionicPopup, Doctor, Communication, Storage, CONFIG, $filter) {
+/**
+ * 选择转发的团队
+ * @Author   xjz
+ * @DateTime 2017-07-05
+ */
+.controller('selectTeamCtrl', ['$state', '$scope', '$ionicPopup', 'Doctor', 'Communication', 'Storage', '$filter', 'CONFIG', 'socket', function ($state, $scope, $ionicPopup, Doctor, Communication, Storage, $filter, CONFIG, socket) {
+  $scope.params = {
+        // isSearch:false,
+  }
   $scope.query = {
     name: ''
   }
+  console.log($state.params)
   Doctor.getMyGroupList({ userId: Storage.get('UID') })
         .then(function (data) {
           $scope.teams = data
@@ -2039,8 +2823,8 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
 
   $scope.sendTo = function (team) {
     var confirmPopup = $ionicPopup.confirm({
-      title: '转发给：' + team.name,
-                // template: ''
+      title: '转发到：' + team.name,
+            // template: '确定要结束此次咨询吗?'
       okText: '确定',
       cancelText: '取消'
     })
@@ -2048,7 +2832,6 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
       if (res) {
         var time = new Date()
         var gid = 'G' + $filter('date')(time, 'MMddHmsss')
-        var gid
         var msgdata = $state.params.msg
 
         var d = {
@@ -2063,7 +2846,7 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
         msgdata.targetId = team.teamId
         msgdata.fromId = thisDoctor.userId
         var msgJson = {
-          clientType: 'wechatdoctor',
+          clientType: 'doctor',
           contentType: 'custom',
           fromID: thisDoctor.userId,
           fromName: thisDoctor.name,
@@ -2075,7 +2858,7 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
           targetName: team.name,
           targetType: 'group',
           status: 'send_going',
-          newsType: '13',
+          newsType: 13,
           targetRole: 'doctor',
           createTimeInMillis: Date.now(),
           content: msgdata
@@ -2083,12 +2866,12 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
 
         Communication.newConsultation(d)
                     .then(function (data) {
-                      socket.emit('newUser', {user_name: thisDoctor.name, user_id: thisDoctor.userId, client: 'wechatdoctor'})
-                      socket.emit('message', {msg: msgJson, to: team.teamId, role: 'doctor'})
-                      socket.on('messageRes', function (messageRes) {
+                      console.log(data)
+                        // socket.emit('newUser', { user_name: thisDoctor.name, user_id: thisDoctor.userId });
+                      socket.emit('message', { msg: msgJson, to: team.teamId, role: 'doctor' })
+                      var listener = $scope.$on('im:messageRes', function (event, messageRes) {
                         if (messageRes.msg.createTimeInMillis != msgJson.createTimeInMillis) return
-                        socket.off('messageRes')
-                        socket.emit('disconnect')
+                        listener()
                         $state.go('tab.group-chat', { type: '0', groupId: team.teamId, teamId: team.teamId })
                       })
                     }, function (er) {
@@ -2098,27 +2881,48 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
     })
   }
 }])
-.controller('doctorProfileCtrl', ['$scope', '$state', 'Doctor', 'Storage', '$ionicHistory', function ($scope, $state, Doctor, Storage, $ionicHistory) {
-  $scope.goBack = function () {
-    $ionicHistory.goBack()
-  }
+/**
+ * 医生信息
+ * @Author   xjz
+ * @DateTime 2017-07-05
+ */
+.controller('doctorProfileCtrl', ['$scope', '$state', 'Doctor', 'Storage', function ($scope, $state, Doctor, Storage) {
   $scope.doctor = {}
+  /**
+   * 点击与医生聊天
+   * @Author   xjz
+   * @DateTime 2017-07-05
+   * @return   {[type]}
+   */
   $scope.goChat = function () {
-    $state.go('tab.detail', {type: '2', chatId: $state.params.memberId})
+    $state.go('tab.detail', { type: '2', chatId: $state.params.memberId })
   }
   $scope.$on('$ionicView.beforeEnter', function () {
-    if ($state.params.memberId == Storage.get('UID')) $scope.isme = true
-    else $scope.isme = false
-
-    Doctor.getDoctorInfo({ userId: $state.params.memberId })
+    console.log($state.params.memberId)
+    Doctor.doctor({ userId: $state.params.memberId })
             .then(function (data) {
+              console.log(data)
               $scope.doctor = data.results
             })
+    $scope.isme = $state.params.memberId == Storage.get('UID')
   })
 }])
-.controller('viewChatCtrl', ['$scope', '$state', '$ionicModal', '$ionicScrollDelegate', '$ionicHistory', 'voice', 'CONFIG', 'Communication', 'Doctor', 'Patient', '$q', 'Storage', function ($scope, $state, $ionicModal, $ionicScrollDelegate, $ionicHistory, voice, CONFIG, Communication, Doctor, Patient, $q, Storage) {
+/**
+ * 转发前的聊天记录页面，从病例讨论过来的，参见detailCtrl
+ * @Author   xjz
+ * @DateTime 2017-07-05
+ * 20170904 与回复界面合并 zyh
+ */
+.controller('viewChatCtrl', ['$scope', '$state', '$ionicModal', '$ionicScrollDelegate', '$ionicHistory', '$ionicLoading', 'voice', 'CONFIG', 'Communication', 'Doctor', 'Patient2', '$q', 'Storage', 'Account', 'socket', 'mySocket', 'Counsel', 'Mywechat', 'arrTool', function ($scope, $state, $ionicModal, $ionicScrollDelegate, $ionicHistory, $ionicLoading, voice, CONFIG, Communication, Doctor, Patient2, $q, Storage, Account, socket, mySocket, Counsel, Mywechat, arrTool) {
   $scope.photoUrls = {}
+  $scope.input = {
+    text: ''
+  }
+  $scope.patient = {}
   $scope.params = {
+    type: '',
+    groupId: '',
+    teamId: '',
     msgCount: 0,
     moreMsgs: true,
     chatId: '',
@@ -2132,42 +2936,67 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
     if (!delay) delay = 100
     setTimeout(function () {
       $scope.scrollHandle.scrollBottom(animate)
-      $timeout(function () {
-        $scope.scrollHandle.resize()
-      }, 500)
-      $timeout(function () {
-        $scope.scrollHandle.resize()
-      }, 1000)
     }, delay)
   }
     // render msgs
   $scope.$on('$ionicView.beforeEnter', function () {
+    $scope.input.text = ''
+    $scope.params.groupId = $state.params.groupId
+    $scope.params.teamId = $state.params.teamId
+    Communication.getConsultation({ consultationId: $state.params.groupId })
+            .then(function (data) {
+              $scope.patient = data.result
+            })
     $scope.photoUrls = {}
     $scope.msgs = []
+    $scope.imgIndex = 0  // 当前显示的图片在消息队列中的位置
+    $scope.imgPosition = 0
     $scope.params.chatId = $state.params.patientId
     $scope.params.doctorId = $state.params.doctorId
     Storage.set('chatSender', $scope.params.doctorId)
     $scope.params.msgCount = 0
-        // 获取counsel信息
-    Patient.getPatientDetail({ userId: $scope.params.chatId })
+    console.log($scope.params)
+        // 获取头像
+    Patient2.getPatientDetail({ userId: $scope.params.chatId })
             .then(function (data) {
               if (data.results.name) $scope.params.patientName = '-' + data.results.name
               $scope.photoUrls[data.results.userId] = data.results.photoUrl
             })
-    Doctor.getDoctorInfo({ userId: $scope.params.doctorId })
+    Doctor.doctor({ userId: $scope.params.doctorId })
             .then(function (response) {
               $scope.photoUrls[response.results.userId] = response.results.photoUrl
-            }, function (err) {
-              console.log(err)
             })
+    Doctor.doctor({ userId: Storage.get('UID') })
+            .then(function (response) {
+              $scope.myname = response.results.name
+            })
+    Communication.getTeam({ teamId: $scope.params.teamId })
+                .then(function (data) {
+                  Doctor.doctor({userId: data.sponsorId})
+            .then(function (sponsor) {
+              $scope.photoUrls[sponsor.results.userId] = sponsor.results.photoUrl
+            })
+                  for (i = 0; i < data.results.members.length; i++) {
+                    $scope.photoUrls[data.results.members[i].userId] = data.results.members[i].photoUrl
+                  }
+                })
+        // 获取counsel信息
+        // Counsel.getStatus({ doctorId: Storage.get('UID'), patientId: $scope.params.chatId })
+        //     .then(function (data) {
+        //         console.log(data)
+        //         $scope.params.counsel = data.result;
+        //     }, function (err) {
+        //         console.log(err);
+        //     })
 
-    $scope.getMsg(10).then(function (data) {
+    $scope.getMsg(15).then(function (data) {
       $scope.msgs = data
-      toBottom(true, 500)
+      toBottom(true, 400)
     })
   })
 
   $scope.$on('$ionicView.enter', function () {
+    // if ($ionicPlatform.is('ios') == false)document.getElementById('inputbar').removeAttribute('keyboard-attach')
     imgModalInit()
   })
 
@@ -2185,14 +3014,17 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
     return $q(function (resolve, reject) {
       var q = {
         messageType: '1',
-        newsType: '11',
+        newsType: 11,
         id1: $scope.params.doctorId,
         id2: $scope.params.chatId,
+        receiverRole: 'patient',
+        sendByRole: 'doctor',
         skip: $scope.params.msgCount,
         limit: num
       }
       Communication.getCommunication(q)
             .then(function (data) {
+              console.log(data)
               var d = data.results
               $scope.$broadcast('scroll.refreshComplete')
               if (d == '没有更多了!') return noMore()
@@ -2216,12 +3048,210 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
                 $scope.msgs.unshift(res[i])
                     // });
               }
+              console.log($scope.msgs)
               resolve($scope.msgs)
             }, function (err) {
               $scope.$broadcast('scroll.refreshComplete')
               resolve($scope.msgs)
             })
     })
+  }
+
+  $scope.pushMsg = function (msg) {
+    console.info('pushMsg')
+    var len = $scope.msgs.length
+    if (msg.hasOwnProperty('time')) {
+      if (len == 0) {
+        msg.diff = true
+      } else {
+        var m = $scope.msgs[len - 1]
+        if (m.hasOwnProperty('time')) {
+          msg.diff = (msg.time - m.time) > 300000
+        }
+      }
+    }
+    $scope.params.msgCount++
+    $scope.msgs.push(msg)
+    toBottom(true, 200)
+    toBottom(true, 600)
+    setTimeout(function () {
+      var pos = arrTool.indexOf($scope.msgs, 'createTimeInMillis', msg.createTimeInMillis)
+      if (pos != -1 && $scope.msgs[pos].status == 'send_going') $scope.msgs[pos].status = 'send_success'
+    }, 1000)
+  }
+
+/**
+   * 保存结论
+   * @Author   xjz
+   * @DateTime 2017-07-05
+   * @return   {[type]}
+   */
+  $scope.save = function () {
+    var inputtext = $scope.input.text
+    $scope.input.text = ''
+    Communication.conclusion({ consultationId: $state.params.groupId, conclusion: inputtext})
+            .then(function (data) {
+              console.log(data)
+              Communication.getCounselReport({ counselId: $scope.patient.diseaseInfo.counselId })
+                    .then(function (res) {
+                      var DID = res.results.doctorId.userId,
+                        PID = res.results.patientId.userId
+                      var msgJson = {
+                        clientType: 'doctor',
+                        contentType: 'text',
+                        concluderID: Storage.get('UID'),
+                        concluderName: $scope.myname,
+                        fromID: DID,
+                        fromName: res.results.doctorId.name,
+                        fromUser: {
+                          avatarPath: CONFIG.mediaUrl + 'uploads/photos/resized' + DID + '_myAvatar.jpg'
+                        },
+                        targetID: PID,
+                        targetName: res.results.patientId.name,
+                        targetType: 'single',
+                        status: 'send_going',
+                        newsType: 11,
+                        createTimeInMillis: Date.now(),
+                        targetRole: 'patient',
+                        content: {
+                          text: inputtext
+
+                        }
+                      }
+
+                      $scope.pushMsg(msgJson)
+                      if (res.results.type == 2 || res.results.type == 3) {
+                            // 暂时把socket连接指向DID，用于此条消息的发送。之后call resetUserAsAppUser改回APP使用者
+                            // var resetUserAsAppUser = mySocket.newUserForTempUse(DID,res.results.doctorId.name);
+                            // socket.emit('newUser', { user_name: res.results.doctorId.name, user_id: DID });
+                        var actionUrl = 'https://open.weixin.qq.com/connect/oauth2/authorize?appid=wxb830b12dc0fa74e5&redirect_uri=http://proxy.haihonghospitalmanagement.com/go&response_type=code&scope=snsapi_userinfo&state=patient_11_1_' + DID + '_' + res.results.counselId + '&#wechat_redirect'
+                        var template = {
+                          'userId': PID, // 患者的UID
+                          'role': 'patient',
+                          'postdata': {
+                            'template_id': 'N_0kYsmxrQq-tfJhGUo746G8Uem6uHZgK138HIBKI2I',
+                            'url': actionUrl,
+                            'data': {
+                              'first': {
+                                'value': '您的问诊' + res.results.symptom + '已被回复！', // XXX取那个咨询或问诊的标题
+                                'color': '#173177'
+                              },
+                              'keyword1': {
+                                'value': res.results.help, // 咨询的问题
+                                'color': '#173177'
+                              },
+                              'keyword2': {
+                                'value': inputtext, // 医生的回复
+                                'color': '#173177'
+                              },
+                              'keyword3': {
+                                'value': res.results.doctorId.name, // 回复医生的姓名
+                                'color': '#173177'
+                              },
+                              'remark': {
+                                'value': '感谢您的使用！',
+                                'color': '#173177'
+                              }
+                            }
+                          }
+                        }
+                        Mywechat.messageTemplate(template)
+                        socket.emit('message', { msg: msgJson, to: PID, role: 'doctor'})
+                            // resetUserAsAppUser();
+
+                        $ionicLoading.show({ template: '回复成功'})
+
+                        setTimeout(function () {
+                          $ionicLoading.hide()
+                        }, 1000)
+                      } else if (res.results.type == 6 || res.results.type == 7 || res.results.type == 1) {
+                        var actionUrl = 'https://open.weixin.qq.com/connect/oauth2/authorize?appid=wxb830b12dc0fa74e5&redirect_uri=http://proxy.haihonghospitalmanagement.com/go&response_type=code&scope=snsapi_userinfo&state=patient_11_1_' + DID + '_' + res.results.counselId + '&#wechat_redirect'
+                        var template = {
+                          'userId': PID, // 患者的UID
+                          'role': 'patient',
+                          'postdata': {
+                            'template_id': 'N_0kYsmxrQq-tfJhGUo746G8Uem6uHZgK138HIBKI2I',
+                            'url': actionUrl,
+                            'data': {
+                              'first': {
+                                'value': '您的' + (res.results.type == 1 ? '咨询' : '加急咨询') + res.results.symptom + '已被回复！', // XXX取那个咨询或问诊的标题
+                                'color': '#173177'
+                              },
+                              'keyword1': {
+                                'value': res.results.help, // 咨询的问题
+                                'color': '#173177'
+                              },
+                              'keyword2': {
+                                'value': inputtext, // 医生的回复
+                                'color': '#173177'
+                              },
+                              'keyword3': {
+                                'value': res.results.doctorId.name, // 回复医生的姓名
+                                'color': '#173177'
+                              },
+                              'remark': {
+                                'value': '感谢您的使用！',
+                                'color': '#173177'
+                              }
+                            }
+                          }
+                        }
+                        Mywechat.messageTemplate(template)
+
+                        Account.modifyCounts({doctorId: DID, patientId: PID, modify: '-1'})
+                            .then(function () {
+                              Account.getCounts({doctorId: DID, patientId: PID})
+                                .then(function (response) {
+                                    // var resetUserAsAppUser = mySocket.newUserForTempUse(DID,res.results.doctorId.name);
+                                    // socket.emit('newUser', { user_name: res.results.doctorId.name, user_id: DID });
+                                  socket.emit('message', { msg: msgJson, to: PID, role: 'doctor'})
+
+                                  if (response.result.count <= 0) {
+                                    var endlMsg = {
+                                      type: 'endl',
+                                      info: '咨询已结束',
+                                      docId: DID,
+                                      counseltype: 1,
+                                      counselId: $scope.patient.diseaseInfo.counselId
+
+                                    }
+                                    if (res.results.type == 6 || res.results.type == 7) {
+                                      endlMsg.info = '加急咨询已结束'
+                                      endlMsg.counseltype = 6
+                                    }
+                                    var endJson = {
+                                      clientType: 'doctor',
+                                      contentType: 'custom',
+                                      fromID: DID,
+                                      fromName: res.results.doctorId.name,
+                                      fromUser: {
+                                        avatarPath: CONFIG.mediaUrl + 'uploads/photos/resized' + DID + '_myAvatar.jpg'
+                                      },
+                                      targetID: PID,
+                                      targetName: res.results.patientId.name,
+                                      targetType: 'single',
+                                      status: 'send_going',
+                                      createTimeInMillis: Date.now(),
+                                      newsType: 11,
+                                      targetRole: 'patient',
+                                      content: endlMsg
+                                    }
+                                    socket.emit('message', { msg: endJson, to: PID, role: 'doctor'})
+                                    Counsel.changeStatus({doctorId: DID, patientId: PID, type: res.results.type, status: 0})
+                                  }
+                                    // resetUserAsAppUser();
+                                  $ionicLoading.show({ template: '回复成功'})
+
+                                  setTimeout(function () {
+                                    $ionicLoading.hide()
+                                  }, 1000)
+                                })
+                            })
+                      }
+                    })
+            }, function (err) {
+              console.log(err)
+            })
   }
 
   function noMore () {
@@ -2233,7 +3263,7 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
     }, 5000)
   }
   $scope.DisplayMore = function () {
-    $scope.getMsg(10).then(function (data) {
+    $scope.getMsg(15).then(function (data) {
       $scope.msgs = data
     })
   }
@@ -2253,14 +3283,18 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
       scope: $scope
     }).then(function (modal) {
       $scope.modal = modal
+            // $scope.modal.show();
       $scope.imageHandle = $ionicScrollDelegate.$getByHandle('imgScrollHandle')
     })
   }
 
   $scope.$on('image', function (event, args) {
+    console.log(args)
     event.stopPropagation()
     $scope.imageHandle.zoomTo(1, true)
-    $scope.imageUrl = args[2].localPath || (CONFIG.mediaUrl + (args[2].src || args[2].src_thumb))
+    $scope.imgIndex = $scope.msgs.indexOf(args[2])
+    $scope.imgPosition = $scope.imgIndex
+    $scope.imageUrl = args[2].content.localPath || (CONFIG.mediaUrl + (args[2].content.src || args[2].content.src_thumb))
     $scope.modal.show()
   })
 
@@ -2271,6 +3305,32 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
   $scope.switchZoomLevel = function () {
     if ($scope.imageHandle.getScrollPosition().zoom != $scope.zoomMin) { $scope.imageHandle.zoomTo(1, true) } else {
       $scope.imageHandle.zoomTo(5, true)
+    }
+  }
+  $scope.onSwipeRight = function () {
+    if ($scope.imageHandle.getScrollPosition().zoom === $scope.zoomMin) {  // 没有缩放时才允许切换
+      $scope.imgIndex--
+      if ($scope.imgIndex >= 0) {
+        if ($scope.msgs[$scope.imgIndex].contentType === 'image') {
+          $scope.imgPosition = $scope.imgIndex
+          $scope.imageUrl = (CONFIG.mediaUrl + ($scope.msgs[$scope.imgIndex].content.src || $scope.msgs[$scope.imgIndex].content.src_thumb))
+        } else {
+          $scope.onSwipeRight()
+        }
+      } else { $scope.imgIndex = $scope.imgPosition }
+    }
+  }
+  $scope.onSwipeLeft = function () {
+    if ($scope.imageHandle.getScrollPosition().zoom === $scope.zoomMin) {  // 没有缩放时才允许切换
+      $scope.imgIndex++
+      if ($scope.imgIndex < $scope.msgs.length) {
+        if ($scope.msgs[$scope.imgIndex].contentType === 'image') {
+          $scope.imgPosition = $scope.imgIndex
+          $scope.imageUrl = (CONFIG.mediaUrl + ($scope.msgs[$scope.imgIndex].content.src || $scope.msgs[$scope.imgIndex].content.src_thumb))
+        } else {
+          $scope.onSwipeLeft()
+        }
+      } else { $scope.imgIndex = $scope.imgPosition }
     }
   }
   $scope.$on('voice', function (event, args) {
@@ -2284,18 +3344,75 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
             })
     $scope.sound.play()
   })
-
+    // 长按工具条
+    // var options = [{
+    //     name: '转发医生',
+    // }, {
+    //     name: '转发团队',
+    // }]
+    // $ionicPopover.fromTemplateUrl('partials/others/toolbox-pop.html', {
+    //     scope: $scope,
+    // }).then(function(popover) {
+    //     $scope.options = options;
+    //     $scope.popover = popover;
+    // });
   $scope.$on('holdmsg', function (event, args) {
     event.stopPropagation()
+        // $scope.holdId = args[1];
+        // console.log(args)
+        // $scope.popover.show(args[2]);
   })
+    // $scope.toolChoose = function(data) {
+    //     // console.log(data);
+    //     var content = $scope.msgs[arrTool.indexOf($scope.msgs, 'createTimeInMillis', $scope.holdId)].content;
+    //     if (data == 0) $state.go('tab.selectDoc', { msg: content });
+    //     if (data == 1) $state.go('tab.selectTeam', { msg: content });
+    // };
   $scope.$on('viewcard', function (event, args) {
     event.stopPropagation()
+    console.log(args[2])
+    if (args[2].target.tagName == 'IMG') {
+      $scope.imageHandle.zoomTo(1, true)
+      $scope.imageUrl = args[2].target.currentSrc
+      console.log(args[2].target.attributes.hires.nodeValue)
+      $scope.modal.show()
+    } else {
+      Storage.set('getpatientId', args[1].content.patientId)
+      var statep = {
+        doctorId: $state.params.doctorId,
+        patientId: $state.params.patientId,
+        groupId: $state.params.groupId,
+        teamId: $state.params.teamId
+      }
+      Storage.set('backId', 'tab.view-chat')
+      Storage.set('viewChatParams', JSON.stringify(statep))
+      $state.go('tab.patientDetail')
+    }
   })
 
   $scope.$on('profile', function (event, args) {
     event.stopPropagation()
+    if (args[1].direct == 'receive') {
+      Storage.set('getpatientId', args[1].fromID)
+      var statep = {
+        doctorId: $state.params.doctorId,
+        patientId: $state.params.patientId,
+        groupId: $state.params.groupId,
+        teamId: $state.params.teamId
+      }
+      Storage.set('backId', 'tab.view-chat')
+      Storage.set('viewChatParams', JSON.stringify(statep))
+      $state.go('tab.patientDetail')
+    } else {
+      $state.go('tab.group-profile', { memberId: args[1].concluderID || args[1].fromID})
+    }
   })
-
+  /**
+   * 回去
+   * @Author   xjz
+   * @DateTime 2017-07-05
+   * @return   {[type]}
+   */
   $scope.goBack = function () {
     $ionicHistory.goBack()
   }

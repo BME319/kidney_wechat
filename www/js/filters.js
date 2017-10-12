@@ -9,12 +9,6 @@ angular.module('kidney.filters', [])
     return $filter('date')(msgTime, 'M/d/yy H:mm')
   }
 }])
-// 解决 Blocked loading resource from url not allowed by $sceDelegate policy
-.filter('trusted', ['$sce', function ($sce) {
-  return function (url) {
-    return $sce.trustAsResourceUrl(url)
-  }
-}])
 .filter('filterGender', [function () {
   return function (gender) {
     var g = '未知'
@@ -129,14 +123,12 @@ angular.module('kidney.filters', [])
     return name
   }
 }])
+
 .filter('filterAge', [function () {
   return function (date) {
-    if (date === undefined) return ''
-    var d = new Date(date),
-      dateNow = new Date(),
-      age = dateNow.getFullYear() - d.getFullYear()
-    if (age >= 0 && age < 200) return age + '岁'
-    return ''
+    var d = new Date(date)
+    var dateNow = new Date()
+    return dateNow.getFullYear() - d.getFullYear()
   }
 }])
 
@@ -189,42 +181,73 @@ angular.module('kidney.filters', [])
     return ret.toFixed(2)
   }
 }])
-.filter('changepatientimgip', [function () {
-  return function (url) {
-    if (url) {
-      if (url.indexOf('https' !== -1)) {
-        url = url.replace(/https/, 'http')
-      }
-    } else {
-      url = 'img/patient.png'
-    }
-
-    return url
+.filter('chargeType', [function () {
+  return function (type) {
+    var g = '未知'
+    if (type == 1) { g = '咨询' }
+    if (type == 2) { g = '问诊' }
+    if (type == 3) { g = '咨询升级问诊' }
+    if (type == 4) { g = '主管医生' }
+    if (type == 5) { g = '面诊' }
+    if (type == 6) { g = '加急咨询' }
+    if (type == 7) { g = '咨询升级升级加急咨询' }
+    return g
   }
 }])
-.filter('changedoctorimgip', [function () {
-  return function (url) {
-    if (url) {
-      if (url.indexOf('https' !== -1)) {
-        url = url.replace(/https/, 'http')
-      }
-    } else {
-      url = 'img/doctor.png'
+.filter('filterDayPeriod', [function () {
+  return function (type) {
+    var name
+    switch (type) {
+      case 'Afternoon':
+        name = '下午'
+        break
+      case 'Morning':
+        name = '上午'
+        break
     }
-
-    return url
+    return name
   }
 }])
-.filter('changeimgip', [function () {
-  return function (url) {
-    if (url) {
-      if (url.indexOf('https' !== -1)) {
-        url = url.replace(/https/, 'http')
-      }
-    } else {
-      url = 'img/DefaultAvatar.jpg'
+.filter('timeType', [function () {
+  return function (type) {
+    var g = '未知'
+    if (type == 1) { g = '超过24h未回复' }
+    if (type == 2) { g = '超过18h未回复' }
+    return g
+  }
+}])
+.filter('filterPayStatus', [function () {
+  return function (type) {
+    var name = '未定义'
+    switch (type) {
+      case 0: case 1:
+        name = '付款失败'
+        break
+      case 2:
+        name = '支付成功'
+        break
+      case 3:
+        name = '支付失败'
+        break
+      case 4:
+        name = '取消订单'
+        break
+      case 5:
+        name = '订单超时'
+        break
+      case 6:
+        name = '正在退款'
+        break
+      case 7:
+        name = '退款关闭'
+        break
+      case 8:
+        name = '退款异常'
+        break
+      case 9:
+        name = '退款成功'
+        break
     }
-
-    return url
+    return name
   }
 }])

@@ -1,18 +1,16 @@
 <ion-view hide-tabs view-title="病历结论">
-    <!-- <ion-nav-bar class="bar-positive"> -->
     <ion-nav-bar class="bar-positive " align-title="center">
         <ion-nav-buttons side="left">
-          <button class="button button-icon icon ion-ios-arrow-left fc-ff" ng-click="$ionicGoBack()"></button>      
+            <button class="button button-icon icon ion-ios-arrow-left fc-ff" ng-click="$ionicGoBack()"></button>
         </ion-nav-buttons>
-          <ion-nav-buttons side="right">
+        <ion-nav-buttons side="right">
             <button class="button button-icon" ng-click="save()">发送</button>
         </ion-nav-buttons>
-      </ion-nav-bar>
-    <!-- </ion-nav-bar> -->
+    </ion-nav-bar>
     <ion-content class="gray-back" scroll="false">
         <div style="width:100%;margin:0;max-height:65vh;overflow-y: scroll;" class="list">
             <div class="item item-avatar" style="padding-bottom:10px">
-                <img ng-src="{{patient.patientId.photoUrl|changepatientimgip}}">
+                <img ng-src="{{patient.patientId.photoUrl || 'img/DefaultAvatar.jpg'}} ">
                 <div>
                     <div style="display:inline-block;margin-right:1.2em;font-size:1.25em">{{patient.patientId.name}} </div>
                     <div style="display:inline-block">{{patient.patientId.gender | filterGender}} {{patient.patientId.birthday | filterAge}}</div>
@@ -35,4 +33,3 @@
         </form>
     </ion-content>
 </ion-view>
-

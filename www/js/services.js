@@ -45,16 +45,15 @@ angular.module('kidney.services', ['ionic', 'ngResource'])
   }
 }])
 .constant('CONFIG', {
-  crossKey: 'fe7b9ba069b80316653274e4',
-  appKey: 'cf32b94444c4eaacef86903e',
-  baseUrl: 'http://121.196.221.44:4060/api/v1/',
-  mediaUrl: 'http://121.196.221.44:8055/',
-  socketUrl: 'http://121.196.221.44:4060/chat',
-  imgThumbUrl: 'http://121.196.221.44:8055/uploads/photos/resize',
-  imgLargeUrl: 'http://121.196.221.44:8055/uploads/photos/',
+  // baseUrl: 'http://121.43.107.106:4060/api/v1/',
+  baseTwoUrl: 'http://docker2.haihonghospitalmanagement.com/api/v2/',
+  mediaUrl: 'http://df2.haihonghospitalmanagement.com/',
+  socketServer: 'http://docker2.haihonghospitalmanagement.com/',
+  imgThumbUrl: 'http://df2.haihonghospitalmanagement.com/uploads/photos/resize',
+  imgLargeUrl: 'http://df2.haihonghospitalmanagement.com/uploads/photos/',
   cameraOptions: {
     cam: {
-      quality: 60,
+      quality: 70,
       destinationType: 1,
       sourceType: 1,
       allowEdit: true,
@@ -65,7 +64,7 @@ angular.module('kidney.services', ['ionic', 'ngResource'])
       saveToPhotoAlbum: false
     },
     gallery: {
-      quality: 60,
+      quality: 70,
       destinationType: 1,
       sourceType: 0,
       allowEdit: true,
@@ -166,14 +165,6 @@ angular.module('kidney.services', ['ionic', 'ngResource'])
                         .then(function (fileUrl) {
                           console.log(fileUrl)
                           resolve(fileUrl)
-                            // window.JMessage.sendSingleVoiceMessage(receiver, fileUrl, CONFIG.appKey,
-                            //     function(res) {
-                            //         resolve(res);
-                            //     },
-                            //     function(err) {
-                            //         reject(err)
-                            //     });
-                            // resolve(fileUrl.substr(fileUrl.lastIndexOf('/')+1));
                         }, function (err) {
                           console.log(err)
                           reject(err)
@@ -229,536 +220,121 @@ angular.module('kidney.services', ['ionic', 'ngResource'])
   return audio
 }])
 
-.factory('jmapi', ['$http', 'JM', 'Doctor', '$q', 'jm', function ($http, JM, Doctor, $q, jm) {
-    // var hs={
-    //     'Authorization':'Basic Y2YzMmI5NDQ0NGM0ZWFhY2VmODY5MDNlOmJhYjI4M2NkOWQzMDY4ZTE5NDYwODgzMg==',
-    //     'Content-Type':'application/json'
-    // };
-    // var host="https://api.im.jpush.cn/v1/";
-    // function jmreq(method,resource,params){
-    //     req={
-    //         method:method,
-    //         url:host+resource,
-    //         headers:hs,
-    //         data:params
-    //     }
-    //     return $http(req);
-    // }
-  return {
-        // userCheck:function(userId){
-        //     jmreq('GET','users/'+userId)
-        //     .then(function(res){
-        //         console.log(res);
-        //     },function(err){
-        //         console.error(err);
-        //         if(err.data.error.code=='899002') return this.users(userId);
-        //     });
-        // },
-    registerByPhone: function (phone) {
-      return User.getUserId({username: phone})
-                .then(function (data) {
-                  if (data.UserId) return this.users(data.UserId)
-                  return data
-                }, function (err) {
-                  return err
-                })
-    },
-    users: function (userId) {
-            // return jm.users({flag:'doctor',username:userId})
-            // return Doctor.getDoctorInfo({userId:userId})
-            //     .then(function(data){
-      var d = {
-        'username': userId,
-        'password': JM.pGen(userId),
-        'flag': 'doctor'
-      }
-      var arr = [d]
-      return jm.users(d)
-                // },function(err){
-                //     return 'neterr';
-                // });
-            // Doctor.getDoctorInfo({userId:userId})
-            // .then(function(data){
-            //     var d={
-            //         "username":userId,
-            //         "password":JM.pGen(userId),
-            //         "nickname":data.results.name
-            //     }
-            //     var arr=[d];
-            //     return jmreq('POST','users/',arr);
-            // },function(err){
-            //     return null;
-            // });
-    },
-    groups: function (owner, userArr, Gname, Gdesc) {
-            // var owner = userArr[0];
-            // userArr.splice(0,1);
-      var d = {
-        'owner_username': owner,
-        'name': Gname,
-        'members_username': userArr,
-        'desc': Gdesc,
-        'flag': 'doctor'
-      }
-      return jm.groups(d)
-    },
-    groupsMembers: function (gid, addArr, delArr) {
-      var d = {
-        'add': addArr,
-        'remove': delArr,
-        'groupId': gid,
-        'flag': 'doctor'
-      }
-      return jm.groupsMembers(d)
-    }
-  }
-}])
-// jmessage XJZ
-.factory('JM', ['Storage', '$q', 'Doctor', function (Storage, $q, Doctor) {
-  var ConversationList = []
-  var messageLIsts = {}
-
-    // custom{
-    //     contentStringMap:
-    // }
-    // text{
-    //     text:
-
-    // }
-    // image{
-    //     localThumbnailPath:
-
-    // }
-    // voice{
-    //     duration:
-    //     local_path:
-    // }
-    // var msgSample={
-    //     contentType:'',
-    //     fromID:'',
-    //     fromName:'',
-    //     fromUser:{
-
-    //     },
-    //     targetName:'',
-    //     targetType:'',
-    //     direct:'',
-    //     status:'',
-    //     diff:true,
-    //     createTimeInMillis:'',
-    //     newsType:'',
-    //     content:{}
-    // }
-  function pGen (u) {
-    return md5(u, 'kidney').substr(4, 10)
-  }
-
-  function checkIsLogin () {
-    return $q(function (resolve, reject) {
-      window.JMessage.getMyInfo(function (response) {
-        console.log('user is login' + response)
-        var myInfo = JSON.parse(response)
-        window.JMessage.username = myInfo.userName
-                // window.JMessage.nickname = myInfo.nickname;
-                // window.JMessage.gender = myInfo.mGender;
-                // usernameForConversation = myInfo.userName;
-        resolve(myInfo.userName)
-      }, function (response) {
-        console.log('User is not login.')
-        window.JMessage.username = ''
-        window.JMessage.nickname = ''
-        window.JMessage.gender = 'unknown'
-        reject('not login')
-      })
-    })
-        // console.log("checkIsLogin...");
-  }
-
-    // function getPushRegistrationID() {
-    //     try {
-    //         window.JPush.getRegistrationID(onGetRegistrationID);
-    //         if (device.platform != "Android") {
-    //             window.JPush.setDebugModeFromIos();
-    //             window.JPush.setApplicationIconBadgeNumber(0);
-    //         } else {
-    //             window.JPush.setDebugMode(true);
-    //         }
-    //     } catch (exception) {
-    //         console.log(exception);
-    //     }
-    // }
-
-    // function updateUserInfo() {
-    //     window.JMessage.getMyInfo(
-    //         function(response) {
-    //             var myInfo = JSON.parse(response);
-    //             console.log("user is login" + response);
-    //             window.JMessage.username = myInfo.userName;
-    //             window.JMessage.nickname = myInfo.nickname;
-    //             window.JMessage.gender = myInfo.mGender;
-    //             $('#myInfoUsername').val(myInfo.userName);
-    //             $('#myInfoNickname').val(myInfo.nickname);
-    //             $('#myInfoGender').val(myInfo.gender);
-    //         }, null);
-    // }
-
-    // function getUserDisplayName() {
-    //     if (window.JMessage.nickname.length == 0) {
-    //         return window.JMessage.username;
-    //     } else {
-    //         return window.JMessage.nickname;
-    //     }
-    // }
-
-  function login (user, nick) {
-    return $q(function (resolve, reject) {
-      Doctor.getDoctorInfo({userId: user})
-            .then(function (data) {
-              console.log(user)
-              console.log(pGen(user))
-              if (window.JMessage) {
-                window.JMessage.login(user, pGen(user),
-                        function (response) {
-                          window.JMessage.updateMyInfo('nickname', data.results.name)
-                          window.JMessage.nickname = data.results.name
-                          window.JMessage.username = user
-                          resolve(user)
-                        }, function (err) {
-                          console.log(err)
-                          register(user, data.results.name)
-                            // reject(err);
-                        })
-              }
-            }, function (err) {
-              reject(err)
-            })
-    })
-  }
-
-  function register (user, nick) {
-    return $q(function (resolve, reject) {
-      window.JMessage.register(user, pGen(user),
-                function (response) {
-                  window.JMessage.login(user, pGen(user),
-                    function (response) {
-                        // 真实姓名
-                      window.JMessage.updateMyInfo('nickname', nick)
-                      window.JMessage.username = user
-                      window.JMessage.nickname = nick
-                      resolve(user)
-                    }, function (err) {
-                      console.log(err)
-                      reject(err)
-                    })
-                    // console.log("login callback success" + response);
-                    // resolve(user);
-                },
-                function (response) {
-                  console.log('login callback fail' + response)
-                  reject(response)
-                }
-            )
-    })
-  }
-    // nickname：昵称。
-    // birthday：生日。
-    // signature：个性签名。
-    // gender：性别。
-    // region：地区。
-    // function updateMyInfo(field,value){
-    //     window.JMessage.updateMyInfo(field,value,null,null)
-    // }
-    // function updateConversationList() {
-    //     $('#conversationList').empty().listview('refresh');
-    //     console.log("updateConversationList");
-    //     window.JMessage.getConversationList(
-    //         function(response) {
-    //             conversationList = JSON.parse(response);
-    //         },
-    //         function(response) {
-    //             alert("Get conversation list failed.");
-    //             console.log(response);
-    //         });
-    // }
-
-    // function onReceiveMessage(message) {
-    //     console.log("onReceiveSingleMessage");
-    //     if (device.platform == "Android") {
-    //         message = window.JMessage.message;
-    //         console.log(JSON.stringify(message));
-    //     }
-    //     // messageArray.unshift(message);
-    //     //refreshConversation();
-    // }
-    // function getMessageHistory(username) {
-    //     $('#messageList').empty().listview('refresh');
-    //     //读取的是从 0 开始的 50 条聊天记录，可按实现需求传不同的值。
-    //     window.JMessage.getHistoryMessages("single", username,
-    //         '', 0, 50, function (response) {
-    //             console.log("getMessageHistory ok: " + response);
-    //             messageArray = JSON.parse(response);
-    //             refreshConversation();
-    //         }, function (response) {
-    //             alert("getMessageHistory failed");
-    //             console.log("getMessageHistory fail" + response);
-    //         }
-    //     );
-    // }
-    // function sendMessage() {
-    //     var messageContentString = $("#messageContent").val();
-    //     window.JMessage.sendSingleTextMessage(
-    //         usernameForConversation, messageContentString, null,
-    //         function (response) {
-    //             var msg = JSON.parse(response);
-    //             messageArray.unshift(msg);
-    //             refreshConversation();
-    //         }, function (response) {
-    //             console.log("send message fail" + response);
-    //             alert("send message fail" + response);
-    //         });
-    // }
-  function onGetRegistrationID (response) {
-    console.log('registrationID is ' + response)
-    Storage.set('jid', response)
-        // $("#registrationId").html(response);
-  }
-
-  function getPushRegistrationID () {
-    try {
-      window.JPush.getRegistrationID(onGetRegistrationID)
-      if (device.platform != 'Android') {
-        window.JPush.setDebugModeFromIos()
-        window.JPush.setApplicationIconBadgeNumber(0)
-      } else {
-        window.JPush.setDebugMode(true)
-      }
-    } catch (exception) {
-      console.log(exception)
-    }
-  }
-
-  function onOpenNotification (event) {
-    console.log('index onOpenNotification')
-    try {
-      var alertContent
-      if (device.platform == 'Android') {
-        alertContent = event.alert
-      } else {
-        alertContent = event.aps.alert
-      }
-      alert('open Notification:' + alertContent)
-    } catch (exception) {
-      console.log('JPushPlugin:onOpenNotification' + exception)
-    }
-  }
-
-  function onReceiveNotification (event) {
-    console.log('index onReceiveNotification')
-    try {
-      var alertContent
-      if (device.platform == 'Android') {
-        alertContent = event.alert
-      } else {
-        alertContent = event.aps.alert
-      }
-      $('#notificationResult').html(alertContent)
-    } catch (exception) {
-      console.log(exception)
-    }
-  }
-
-  function onReceivePushMessage (event) {
-    try {
-      var message
-      if (device.platform == 'Android') {
-        message = event.message
-      } else {
-        message = event.content
-      }
-      console.log(message)
-      $('#messageResult').html(message)
-    } catch (exception) {
-      console.log('JPushPlugin:onReceivePushMessage-->' + exception)
-    }
-  }
-
-    // function onSetTagsWithAlias(event) {
-    //     try {
-    //         console.log("onSetTagsWithAlias");
-    //         var result = "result code:" + event.resultCode + " ";
-    //         result += "tags:" + event.tags + " ";
-    //         result += "alias:" + event.alias + " ";
-    //         $("#tagAliasResult").html(result);
-    //     } catch (exception) {
-    //         console.log(exception)
-    //     }
-    // }
-
-    // function setTagWithAlias() {
-    //     try {
-    //         var username = $("#loginUsername").val();
-    //         var tag1 = $("#tagText1").val();
-    //         var tag2 = $("#tagText2").val();
-    //         var tag3 = $("#tagText3").val();
-    //         var alias = $("#aliasText").val();
-    //         var dd = [];
-    //         if (tag1 != "") {
-    //             dd.push(tag1);
-    //         }
-    //         if (tag2 != "") {
-    //             dd.push(tag2);
-    //         }
-    //         if (tag3 != "") {
-    //             dd.push(tag3);
-    //         }
-    //         window.JPush.setTagsWithAlias(dd, alias);
-    //     } catch (exception) {
-    //         console.log(exception);
-    //     }
-    // }
-  function newGroup (name, des, members, type) {
-    return $q(function (resolve, reject) {
-      window.JMessage.createGroup('abcde', 'fg', '',
-            // window.JMessage.createGroup(name,des,
-                function (data) {
-                  console.log(data)
-                    // members=$rootScope.newMember;
-                  var idStr = []
-                  for (var i in members) idStr.push(members[i].userId)
-                  idStr.join(',')
-                    // window.JMessage.addGroupMembers(groupId,idStr,
-                  window.JMessage.addGroupMembers('22818577', 'user004,',
-                        function (data) {
-                          console.log(data)
-                          upload()
-                        }, function (err) {
-                          $ionicLoading.show({ template: '失败addGroupMembers', duration: 1500 })
-                          console.log(err)
-                        })
-                }, function (err) {
-                  $ionicLoading.show({ template: '失败createGroup', duration: 1500 })
-                  console.log(err)
-                })
-    })
-  }
-
-  function sendCustom (type, toUser, key, data) {
-    return $q(function (resolve, reject) {
-      if (type = 'single') {
-        window.JMessage.sendSingleCustomMessage(toUser, data, key,
-                    function (data) {
-                      resolve(data)
-                    }, function (err) {
-                      reject(err)
-                    })
-      } else if (type = 'group') {
-        window.JMessage.sendGroupCustomMessage(toUser, data, key,
-                    function (data) {
-                      resolve(data)
-                    }, function (err) {
-                      reject(err)
-                    })
-      } else {
-        reject('wrong type')
-      }
-    })
-  }
-  function sendContact (type, toUser, data) {
-    return $q(function (resolve, reject) {
-      if (type = 'single') {
-        window.JMessage.sendSingleCustomMessage(toUser, data, key,
-                    function (data) {
-                      resolve(data)
-                    }, function (err) {
-                      reject(err)
-                    })
-      } else if (type = 'group') {
-        window.JMessage.sendGroupCustomMessage(toUser, data, key,
-                    function (data) {
-                      resolve(data)
-                    }, function (err) {
-                      reject(err)
-                    })
-      } else {
-        reject('wrong type')
-      }
-    })
-  }
-  function sendEndl (type, toUser, data) {
-    return $q(function (resolve, reject) {
-      if (type = 'single') {
-        window.JMessage.sendSingleCustomMessage(toUser, data, key,
-                    function (data) {
-                      resolve(data)
-                    }, function (err) {
-                      reject(err)
-                    })
-      } else if (type = 'group') {
-        window.JMessage.sendGroupCustomMessage(toUser, data, key,
-                    function (data) {
-                      resolve(data)
-                    }, function (err) {
-                      reject(err)
-                    })
-      } else {
-        reject('wrong type')
-      }
-    })
-  }
-  return {
-    init: function () {
-      window.JPush.init()
-            // checkIsLogin()
-            // .then(function(data){
-
-            // },function(err){
-            //     if(Storage.get('UID')) login(Storage.get('UID'));
-            // })
-      getPushRegistrationID()
-            // document.addEventListener("jmessage.onReceiveMessage", onReceiveMessage, false);
-            // document.addEventListener("deviceready", onDeviceReady, false);
-            // document.addEventListener("jpush.setTagsWithAlias",
-            //     onSetTagsWithAlias, false);
-            // document.addEventListener("jpush.openNotification",
-            //     onOpenNotification, false);
-            // document.addEventListener("jpush.receiveNotification",
-            //     onReceiveNotification, false);
-            // document.addEventListener("jpush.receiveMessage",
-            //     onReceivePushMessage, false);
-    },
-    login: login,
-    pGen: pGen,
-    sendCustom: sendCustom,
-    newGroup: newGroup,
-    register: register,
-    pGen: pGen,
-    checkIsLogin: checkIsLogin,
-    getPushRegistrationID: getPushRegistrationID
-  }
-}])
 // 获取图片，拍照or相册，见CONFIG.cameraOptions。return promise。xjz
-.factory('Camera', ['$q', '$cordovaCamera', 'CONFIG', 'fs', function ($q, $cordovaCamera, CONFIG, fs) {
+.factory('Camera', ['$q', '$cordovaCamera', '$cordovaFileTransfer', 'CONFIG', 'fs', 'Storage', function ($q, $cordovaCamera, $cordovaFileTransfer, CONFIG, fs, Storage) {
   return {
-    getPicture: function (type) {
+    getPicture: function (type, noCrop) {
+      console.log(type)
       return $q(function (resolve, reject) {
-        $cordovaCamera.getPicture(CONFIG.cameraOptions[type]).then(function (imageUrl) {
+        var opt = CONFIG.cameraOptions[type]
+        if (noCrop) opt.allowEdit = false
+        $cordovaCamera.getPicture(opt).then(function (imageUrl) {
+          console.log(imageUrl)
+          resolve(imageUrl)
               // file manipulation
-          var tail = imageUrl.lastIndexOf('?')
-          if (tail != -1) var fileName = imageUrl.slice(imageUrl.lastIndexOf('/') + 1, tail)
-          else var fileName = imageUrl.slice(imageUrl.lastIndexOf('/') + 1)
-          fs.mvMedia('image', fileName, '.jpg')
-              .then(function (res) {
-                console.log(res)
-                // res: file URL
-                resolve(res)
-              }, function (err) {
-                console.log(err)
-                reject(err)
-              })
+              // var tail=imageUrl.lastIndexOf('?');
+              // if(tail!=-1) var fileName=imageUrl.slice(imageUrl.lastIndexOf('/')+1,tail);
+              // else var fileName=imageUrl.slice(imageUrl.lastIndexOf('/')+1);
+              // fs.mvMedia('image',fileName,'.jpg')
+              // .then(function(res){
+              //   console.log(res);
+              //   //res: file URL
+              //   resolve(res);
+              // },function(err){
+              //   console.log(err);
+              //   reject(err);
+              // })
         }, function (err) {
           console.log(err)
           reject('fail to get image')
         })
+      })
+    },
+    getPictureFromPhotos: function (type, noCrop) {
+      console.log(type)
+      return $q(function (resolve, reject) {
+        var opt = CONFIG.cameraOptions[type]
+        if (noCrop) opt.allowEdit = false
+        $cordovaCamera.getPicture(opt).then(function (imageUrl) {
+          console.log(imageUrl)
+          resolve(imageUrl)
+              // file manipulation
+              // var tail=imageUrl.lastIndexOf('?');
+              // if(tail!=-1) var fileName=imageUrl.slice(imageUrl.lastIndexOf('/')+1,tail);
+              // else var fileName=imageUrl.slice(imageUrl.lastIndexOf('/')+1);
+              // fs.mvMedia('image',fileName,'.jpg')
+              // .then(function(res){
+              //   console.log(res);
+              //   //res: file URL
+              //   resolve(res);
+              // },function(err){
+              //   console.log(err);
+              //   reject(err);
+              // })
+        }, function (err) {
+          console.log(err)
+          reject('fail to get image')
+        })
+      })
+    },
+    uploadPicture: function (imgURI, temp_photoaddress) {
+      return $q(function (resolve, reject) {
+        var uri = encodeURI(CONFIG.baseTwoUrl + 'upload?token=' + Storage.get('TOKEN'))
+            // var photoname = Storage.get("UID"); // 取出病人的UID作为照片的名字
+        var options = {
+          fileKey: 'file',
+          fileName: temp_photoaddress,
+          chunkedMode: true,
+          mimeType: 'image/jpeg'
+        }
+            // var q = $q.defer();
+            // console.log("jinlaile");
+        $cordovaFileTransfer.upload(uri, imgURI, options)
+              .then(function (r) {
+                console.log('Code = ' + r.responseCode)
+                console.log('Response = ' + r.response)
+                console.log('Sent = ' + r.bytesSent)
+                // var result = "上传成功";
+                resolve(r.response)
+              }, function (error) {
+                console.log(error)
+                alert('An error has occurred: Code = ' + error.code)
+                console.log('upload error source ' + error.source)
+                console.log('upload error target ' + error.target)
+                reject(error)
+              }, function (progress) {
+                console.log(progress)
+              })
+      })
+    },
+
+    uploadVoice: function (voiURI, temp_voiceaddress) {
+      return $q(function (resolve, reject) {
+        var uri = encodeURI(CONFIG.baseTwoUrl + 'upload')
+        var options = {
+          fileKey: 'file',
+          fileName: temp_voiceaddress,
+          chunkedMode: true,
+          mimeType: 'audio/mpeg'
+        }
+             // var q = $q.defer();
+             // console.log("jinlaile");
+        $cordovaFileTransfer.upload(uri, voiURI, options)
+               .then(function (r) {
+                 console.log('Code = ' + r.responseCode)
+                 console.log('Response = ' + r.response)
+                 console.log('Sent = ' + r.bytesSent)
+                 // var result = "上传成功";
+                 resolve(r.response)
+               }, function (error) {
+                 console.log(error)
+                 alert('An error has occurred: Code = ' + error.code)
+                 console.log('upload error source ' + error.source)
+                 console.log('upload error target ' + error.target)
+                 reject(error)
+               }, function (progress) {
+                 console.log(progress)
+               })
       })
     }
   }
@@ -769,64 +345,66 @@ angular.module('kidney.services', ['ionic', 'ngResource'])
   var abort = $q.defer()
 
   var Dict = function () {
-    return $resource(CONFIG.baseUrl + ':path/:route', {path: 'dict'}, {
-      getDiseaseType: {method: 'GET', params: {route: 'typeTWO'}, timeout: 100000},
+    return $resource(CONFIG.baseTwoUrl + ':path/:route', {path: 'dict'}, {
+      // getDiseaseType: {method: 'GET', params: {route: 'typeTwo'}, timeout: 100000},
       getDistrict: {method: 'GET', params: {route: 'district'}, timeout: 100000},
-      getHospital: {method: 'GET', params: {route: 'hospital'}, timeout: 100000},
-      getHeathLabelInfo: {method: 'GET', params: {route: 'typeOne'}, timeout: 100000},
-      typeOne: {method: 'GET', params: {route: 'typeOne'}, timeout: 100000}
+      getHospital: {method: 'GET', skipAuthorization: true, params: {route: 'hospital'}, timeout: 100000},
+      getHeathLabelInfo: {method: 'GET', params: {route: 'typeOne'}, timeout: 100000}
+      // typeOne: {method: 'GET', params: {route: 'typeOne'}, timeout: 100000}
     })
   }
 
-    // var Task1 = function(){
-    //     return $resource(CONFIG.baseUrl + ':path',{path:'tasks'},{
-    //         getTask:{method:'GET', params:{}, timeout: 100000}
-    //     });
-    // };
+  var Task1 = function () {
+    return $resource(CONFIG.baseTwoUrl + ':path', {path: 'tasks'}, {
+      // getTask: {method: 'GET', params: {}, timeout: 100000}
+    })
+  }
 
-  var Task = function () {
-    return $resource(CONFIG.baseUrl + ':path/:route', {path: 'tasks'}, {
-      changeTaskstatus: {method: 'POST', params: {route: 'status'}, timeout: 100000},
-      changeTasktime: {method: 'POST', params: {route: 'time'}, timeout: 100000},
+  var Task2 = function () {
+    return $resource(CONFIG.baseTwoUrl + ':path/:route', {path: 'tasks'}, {
+      // changeTaskstatus: {method: 'post', params: {route: 'status'}, timeout: 100000},
+      // changeTasktime: {method: 'post', params: {route: 'time'}, timeout: 100000},
       insertTask: {method: 'POST', params: {route: 'taskModel'}, timeout: 100000},
       getUserTask: {method: 'GET', params: {route: 'task'}, timeout: 100000},
       updateUserTask: {method: 'POST', params: {route: 'task'}, timeout: 100000}
     })
   }
 
-  var Compliance = function () {
-    return $resource(CONFIG.baseUrl + ':path', {path: 'compliance'}, {
-      getcompliance: {method: 'GET', params: {}, timeout: 100000},
-      postcompliance: {method: 'POST', params: {}, timeout: 100000}
-    })
-  }
+  // var Compliance = function () {
+  //   return $resource(CONFIG.baseTwoUrl + ':path', {path: 'compliance'}, {
+  //     postcompliance: {method: 'POST', params: {route: 'compliances'}, timeout: 100000},
+  //     getcompliance: {method: 'GET', params: {route: 'compliance'}, timeout: 100000}
+  //   })
+  // }
 
   var Counsel = function () {
-    return $resource(CONFIG.baseUrl + ':path/:route', {path: 'counsel'}, {
-      getCounsel: {method: 'GET', params: {route: 'counsels'}, timeout: 100000},
-      questionaire: {method: 'POST', params: {route: 'questionaire'}, timeout: 100000},
-      changeCounselStatus: {method: 'POST', params: {route: 'changeCounselStatus'}, timeout: 100000},
+    return $resource(CONFIG.baseTwoUrl + ':path/:route', {path: 'counsel'}, {
+      getCounsels: {method: 'GET', params: {route: 'counsels'}, timeout: 100000},
+      // questionaire: {method: 'POST', params: {route: 'questionaire'}, timeout: 100000},
+      // changeCounselStatus: {method: 'POST', params: {route: 'changeCounselStatus'}, timeout: 100000},
       getStatus: {method: 'GET', params: {route: 'status'}, timeout: 100000},
       changeStatus: {method: 'POST', params: {route: 'status'}, timeout: 100000}
     })
   }
 
   var Patient = function () {
-    return $resource(CONFIG.baseUrl + ':path/:route', {path: 'patient'}, {
-      getPatientDetail: {method: 'GET', params: {route: 'detail'}, timeout: 100000},
-      getMyDoctors: {method: 'GET', params: {route: 'myDoctors'}, timeout: 10000},
+    return $resource(CONFIG.baseTwoUrl + ':path/:route', {path: 'patient'}, {
+      // getPatientDetail: {method: 'GET', params: {route: 'detail'}, timeout: 100000},
+      // getMyDoctors: {method: 'GET', params: {route: 'myDoctors'}, timeout: 10000},
       getDoctorLists: {method: 'GET', params: {route: 'doctors'}, timeout: 10000},
-      getCounselRecords: {method: 'GET', params: {route: 'counselRecords'}, timeout: 10000},
-      insertDiagnosis: {method: 'POST', params: {route: 'diagnosis'}, timeout: 10000},
-      newPatientDetail: {method: 'POST', params: {route: 'detail'}, timeout: 10000},
-      editPatientDetail: {method: 'POST', params: {route: 'editDetail'}, timeout: 10000}
+      replacePhoto: {method: 'POST', params: {route: 'wechatPhotoUrl'}, timeout: 10000},
+      // getCounselRecords: {method: 'GET', params: {route: 'counselRecords'}, timeout: 10000},
+      insertDiagnosis: {method: 'POST', params: {route: 'diagnosis'}, timeout: 10000}
+      // newPatientDetail: {method: 'POST', params: {route: 'detail'}, timeout: 10000},
+      // editPatientDetail: {method: 'POST', params: {route: 'editDetail'}, timeout: 10000}
     })
   }
 
   var Doctor = function () {
-    return $resource(CONFIG.baseUrl + ':path/:route', {path: 'doctor'}, {
-      postDocBasic: {method: 'POST', params: {route: 'detail'}, timeout: 100000},
-      getPatientList: {method: 'GET', params: {route: 'myPatients'}, timeout: 100000},
+    return $resource(CONFIG.baseTwoUrl + ':path/:route', {path: 'doctor'}, {
+      postDocBasic: {method: 'POST', skipAuthorization: true, params: {route: 'detail'}, timeout: 100000},
+      // getPatientList: {method: 'GET', params: {route: 'myPatients'}, timeout: 100000},
+      doctor: {method: 'GET', params: {route: 'doctor'}, timeout: 100000},
       getDoctorInfo: {method: 'GET', params: {route: 'detail'}, timeout: 100000},
       getMyGroupList: {method: 'GET', params: {route: 'myTeams'}, timeout: 100000},
       getGroupPatientList: {method: 'GET', params: {route: 'teamPatients'}, timeout: 100000},
@@ -838,7 +416,7 @@ angular.module('kidney.services', ['ionic', 'ngResource'])
       getSuspendTime: {method: 'GET', params: {route: 'suspendTime'}, timeout: 10000},
       insertSuspendTime: {method: 'POST', params: {route: 'suspendTime'}, timeout: 10000},
       deleteSuspendTime: {method: 'POST', params: {route: 'deleteSuspendTime'}, timeout: 10000},
-      getPatientByDate: {method: 'GET', params: {route: 'myPatientsByDate'}, timeout: 10000},
+      // getPatientByDate: {method: 'GET', params: {route: 'myPatientsByDate'}, timeout: 10000},
       getDocNum: {method: 'GET', params: {route: 'numbers'}, timeout: 10000},
       getAliPayAccount: {method: 'GET', params: {route: 'AliPayAccount'}, timeout: 10000},
       editAliPayAccount: {method: 'POST', params: {route: 'AliPayAccount'}, timeout: 10000}
@@ -846,26 +424,26 @@ angular.module('kidney.services', ['ionic', 'ngResource'])
   }
 
   var User = function () {
-    return $resource(CONFIG.baseUrl + ':path/:route', {path: 'user'}, {
+    return $resource(CONFIG.baseTwoUrl + ':path/:route', {path: 'alluser'}, {
       register: {method: 'POST', skipAuthorization: true, params: {route: 'register', phoneNo: '@phoneNo', password: '@password', role: '@role'}, timeout: 100000},
-      changePassword: {method: 'POST', skipAuthorization: true, params: {route: 'reset', phoneNo: '@phoneNo', password: '@password'}, timeout: 100000},
-      logIn: {method: 'POST', skipAuthorization: true, params: {route: 'login'}, timeout: 10000},
+      changePassword: {method: 'POST', params: {route: 'reset', phoneNo: '@phoneNo', password: '@password'}, timeout: 100000},
+      // logIn: {method: 'POST', skipAuthorization: true, params: {route: 'login'}, timeout: 100000},
       logOut: {method: 'POST', params: {route: 'logout', userId: '@userId'}, timeout: 100000},
-      getUserId: {method: 'GET', skipAuthorization: true, params: {route: 'userID', username: '@username'}, timeout: 100000},
-      sendSMS: {method: 'POST', skipAuthorization: true, params: {route: 'sms', mobile: '@mobile', smsType: '@smsType'}, timeout: 100000}, // 第一次验证码发送成功返回结果为”User doesn't exist“，如果再次发送才返回”验证码成功发送“
-      verifySMS: {method: 'GET', skipAuthorization: true, params: {route: 'sms', mobile: '@mobile', smsType: '@smsType', smsCode: '@smsCode'}, timeout: 100000},
+      getUserId: {method: 'GET', params: {route: 'userID', username: '@username'}, timeout: 100000},
+      sendSMS: {method: 'POST', params: {route: 'sms', mobile: '@mobile', smsType: '@smsType'}, timeout: 100000}, // 第一次验证码发送成功返回结果为”User doesn't exist“，如果再次发送才返回”验证码成功发送“
+      verifySMS: {method: 'GET', params: {route: 'sms', mobile: '@mobile', smsType: '@smsType', smsCode: '@smsCode'}, timeout: 100000},
       getAgree: {method: 'GET', params: {route: 'agreement', userId: '@userId'}, timeout: 100000},
       updateAgree: {method: 'POST', params: {route: 'agreement'}, timeout: 100000},
-            // getUserIDbyOpenId:{method:'GET',skipAuthorization: true,params:{route: 'getUserIDbyOpenId'}, timeout: 100000}, //20170619 后端删除该方法，与getUserID方法合并
-      setOpenId: {method: 'POST', skipAuthorization: true, params: {route: 'unionid'}, timeout: 100000},
-      getMessageOpenId: {method: 'GET', skipAuthorization: true, params: {route: 'openid'}, timeout: 100000},
-      setMessageOpenId: {method: 'POST', skipAuthorization: true, params: {route: 'openid'}, timeout: 100000},
-      One: {method: 'GET', params: {route: 'one'}, timeout: 10000}
+      // getUserIDbyOpenId: {method: 'GET', params: {route: 'getUserIDbyOpenId'}, timeout: 100000},
+      setOpenId: {method: 'POST', params: {route: 'unionid'}, timeout: 100000},
+      setMessageOpenId: {method: 'POST', params: {route: 'openId'}, timeout: 100000},
+      logIn: {method: 'POST', skipAuthorization: true, params: {route: 'login'}, timeout: 100000}
+      // One: {method: 'GET', params: {route: 'one'}, timeout: 10000}
     })
   }
 
   var Health = function () {
-    return $resource(CONFIG.baseUrl + ':path/:route', {path: 'healthInfo'}, {
+    return $resource(CONFIG.baseTwoUrl + ':path/:route', {path: 'healthInfo'}, {
       createHealth: {method: 'POST', params: {route: 'healthInfo', userId: '@userId', type: '@type', time: '@time', url: '@url', label: '@label', description: '@description', comments: '@comments'}, timeout: 100000},
       modifyHealth: {method: 'POST', params: {route: 'healthDetail', userId: '@userId', type: '@type', time: '@time', url: '@url', label: '@label', description: '@description', comments: '@comments', insertTime: '@insertTime'}, timeout: 100000},
       getHealthDetail: {method: 'GET', params: {route: 'healthDetail', userId: '@userId', insertTime: '@insertTime'}, timeout: 100000},
@@ -876,41 +454,35 @@ angular.module('kidney.services', ['ionic', 'ngResource'])
   }
 
   var Comment = function () {
-    return $resource(CONFIG.baseUrl + ':path/:route', {path: 'comment'}, {
-      getComments: {method: 'GET', params: {route: 'getComments'}, timeout: 100000}
+    return $resource(CONFIG.baseTwoUrl + ':path/:route', {path: 'comment'}, {
+      // getComments: {method: 'GET', params: {route: 'getComments'}, timeout: 100000}
     })
   }
 
   var VitalSign = function () {
-    return $resource(CONFIG.baseUrl + ':path/:route', {path: 'vitalSign'}, {
+    return $resource(CONFIG.baseTwoUrl + ':path/:route', {path: 'vitalSign'}, {
       getVitalSigns: {method: 'GET', params: {route: 'vitalSigns'}, timeout: 100000}
     })
   }
 
   var Account = function () {
-    return $resource(CONFIG.baseUrl + ':path/:route', {path: 'account'}, {
-      getAccountInfo: {method: 'GET', params: {route: 'getAccountInfo'}, timeout: 100000},
+    return $resource(CONFIG.baseTwoUrl + ':path/:route', {path: 'account'}, {
+      getAccountInfo: {method: 'GET', params: {route: 'accountInfo'}, timeout: 100000},
       modifyCounts: {method: 'POST', params: {route: 'counts'}, timeout: 100000},
       getCounts: {method: 'GET', params: {route: 'counts'}, timeout: 100000}
     })
   }
 
   var Message = function () {
-    return $resource(CONFIG.baseUrl + ':path/:route', {path: 'message'}, {
-      getMessages: {method: 'GET', params: {route: 'messages'}, timeout: 100000}
-    })
-  }
-
-  var New = function () {
-    return $resource(CONFIG.baseUrl + ':path/:route', {path: 'new'}, {
-      getNews: {method: 'GET', params: {route: 'news'}, timeout: 100000},
-      insertNews: {method: 'POST', params: {route: 'news'}, timeout: 100000},
-      getNewsByReadOrNot: {method: 'GET', skipAuthorization: true, params: {route: 'newsByReadOrNot'}, timeout: 100000}
+    return $resource(CONFIG.baseTwoUrl + ':path/:route', {path: 'message'}, {
+      getMessages: {method: 'GET', params: {route: 'messages'}, timeout: 100000},
+      insertMessages: {method: 'POST', params: {route: 'message'}, timeout: 100000},
+      editStatus: {method: 'POST', params: {route: 'status'}, timeout: 100000}
     })
   }
 
   var Communication = function () {
-    return $resource(CONFIG.baseUrl + ':path/:route', {path: 'communication'}, {
+    return $resource(CONFIG.baseTwoUrl + ':path/:route', {path: 'communication'}, {
       conclusion: {method: 'POST', params: {route: 'conclusion'}, timeout: 100000},
       getCommunication: {method: 'GET', params: {route: 'communication'}, timeout: 100000},
       getCounselReport: {method: 'GET', params: {route: 'counselReport'}, timeout: 100000},
@@ -920,44 +492,126 @@ angular.module('kidney.services', ['ionic', 'ngResource'])
       newTeam: {method: 'POST', params: {route: 'team'}, timeout: 100000},
       removeMember: {method: 'POST', params: {route: 'removeMember'}, timeout: 100000},
       updateLastTalkTime: {method: 'POST', params: {route: 'updateLastTalkTime'}, timeout: 100000},
-      getConsultation: {method: 'GET', params: {route: 'consultation'}, timeout: 100000}
+      getConsultation: {method: 'GET', params: {route: 'consultation'}, timeout: 100000},
+      postCommunication: {method: 'POST', params: {route: 'communication'}, timeout: 100000}
+    })
+  }
+
+  var MassCommunication = function () {
+    return $resource(CONFIG.baseTwoUrl + ':path/:route', {path: 'communication'}, {
+      massToPatient: {method: 'POST', params: {route: 'massToPatient'}, timeout: 100000}
     })
   }
 
   var Insurance = function () {
-    return $resource(CONFIG.baseUrl + ':path/:route', {path: 'insurance'}, {
+    return $resource(CONFIG.baseTwoUrl + ':path/:route', {path: 'insurance'}, {
       getInsMsg: {method: 'GET', params: {route: 'message'}, timeout: 100000},
       updateInsuranceMsg: {method: 'POST', params: {route: 'message'}, timeout: 100000}
     })
   }
 
-  var wechat = function () {
-    return $resource(CONFIG.baseUrl + ':path/:route', {path: 'wechat'}, {
+  var New = function () {
+    return $resource(CONFIG.baseTwoUrl + ':path/:route', {path: 'new'}, {
+      getNews: {method: 'GET', params: {route: 'news'}, timeout: 100000},
+      insertNews: {method: 'POST', params: {route: 'news'}, timeout: 100000},
+      changeNewsStatus: {method: 'POST', params: {route: 'newsStatus'}, timeout: 100000},
+      getNewsByReadOrNot: {method: 'GET', params: {route: 'newsByReadOrNot'}, timeout: 100000}
+    })
+  }
+
+  // var Expense = function () {
+  //   return $resource(CONFIG.baseUrl + ':path/:route', {path: 'expense'}, {
+  //     getDocRecords: {method: 'GET', params: {route: 'docRecords'}, timeout: 100000}
+  //   })
+  // }
+
+  var Order = function () {
+    return $resource(CONFIG.baseTwoUrl + ':path/:route', {path: 'order'}, {
+      order: {method: 'GET', params: {route: 'order'}, timeout: 100000}
+    })
+  }
+
+  var Mywechat = function () {
+    return $resource(CONFIG.baseTwoUrl + ':path/:route', {path: 'wechat'}, {
       settingConfig: {method: 'GET', skipAuthorization: true, params: {route: 'settingConfig'}, timeout: 100000},
       getUserInfo: {method: 'GET', skipAuthorization: true, params: {route: 'getUserInfo'}, timeout: 10000},
       download: {method: 'GET', params: {route: 'download'}, timeout: 100000},
-      messageTemplate: {method: 'POST', params: {route: 'messageTemplate'}, timeout: 100000},
-      createTDCticket: {method: 'POST', params: {route: 'createTDCticket'}, timeout: 100000}
-    })
-  }
-
-  var jm = function () {
-    return $resource(CONFIG.baseUrl + ':path/:route', {path: 'jm'}, {
-      users: {method: 'POST', params: {route: 'users'}, timeout: 100000},
-      groups: {method: 'POST', params: {route: 'groups'}, timeout: 100000},
-      groupsMembers: {method: 'POST', params: {route: 'groups/members'}, timeout: 100000}
-    })
-  }
-
-  var Expense = function () {
-    return $resource(CONFIG.baseUrl + ':path/:route', {path: 'expense'}, {
-      getDocRecords: {method: 'GET', params: {route: 'docRecords'}, timeout: 100000}
+      // gettokenbycode: {method: 'GET', params: {route: 'gettokenbycode'}, timeout: 100000}, 
+      messageTemplate: {method: 'POST', params: {route: 'messageTemplate'}, timeout: 100000}, 
+      createTDCticket: {method: 'POST', params: {route: 'createTDCticket'}, timeout: 100000},
     })
   }
 
   var Advice = function () {
-    return $resource(CONFIG.baseUrl + ':path/:route', {path: 'advice'}, {
-      postAdvice: {method: 'POST', params: {route: 'postAdvice'}, timeout: 100000}
+    return $resource(CONFIG.baseTwoUrl + ':path/:route', {path: 'advice'}, {
+      postAdvice: {method: 'POST', params: {route: 'advice'}, timeout: 100000}
+    })
+  }
+
+  var version = function () {
+    return $resource(CONFIG.baseTwoUrl + ':path', {path: 'version'}, {
+      getVersion: {method: 'GET', skipAuthorization: true, params: {}, timeout: 100000}
+    })
+  }
+
+  var labtestImport = function () {
+    return $resource(CONFIG.baseTwoUrl + ':path', {path: 'labtestImport'}, {
+      getLabtestImport: {method: 'GET', params: {}, timeout: 100000}
+    })
+  }
+
+  var services = function () {
+    return $resource(CONFIG.baseTwoUrl + ':path/:route', {path: 'services'}, {
+      setSchedules: {method: 'POST', params: {route: 'setSchedule'}, timeout: 100000},
+      getStatus: {method: 'GET', params: {}, timeout: 100000},
+      setStatus: {method: 'POST', params: {route: 'status'}, timeout: 100000},
+      setCharge: {method: 'POST', params: {route: 'charge'}, timeout: 100000},
+      getSchedules: {method: 'GET', params: {route: 'mySchedules'}, timeout: 100000},
+      deleteSchedules: {method: 'POST', params: {route: 'deleteSchedule'}, timeout: 100000},
+      relayTarget: {method: 'POST', params: {route: 'relayTarget'}, timeout: 100000},
+      deleteSuspend: {method: 'POST', params: {route: 'deleteSuspend'}, timeout: 100000},
+      setSuspend: {method: 'POST', params: {route: 'setSuspend'}, timeout: 100000},
+      myPDpatients: {method: 'GET', params: {route: 'myPDpatients'}, timeout: 100000},
+      PDConfirmation: {method: 'POST', params: {route: 'PDConfirmation'}, timeout: 100000}
+    })
+  }
+
+  var Doctor2 = function () {
+    return $resource(CONFIG.baseTwoUrl + ':path/:route', {path: 'doctor'}, {
+      getReviewList: {method: 'GET', params: {route: 'myPatientsToReview'}, timeout: 100000},
+      saveReviewInfo: {method: 'POST', params: {route: 'PatientInCharge'}, timeout: 100000},
+      getPatientList: {method: 'GET', params: {route: 'myPatients'}, timeout: 100000},
+      sendgroupPatient: {method: 'POST', params: {route: 'groupPatient'}, timeout: 100000},
+      getPatientByDate: {method: 'GET', params: {route: 'myPatientsByDate'}, timeout: 10000}
+    })
+  }
+
+  var getPatientData = function () {
+    return $resource(CONFIG.baseTwoUrl + ':path/:route', {path: 'report'}, {
+      ReportData: {method: 'GET', params: {route: 'vitalSigns'}, timeout: 10000},
+      SaveReport: {method: 'POST', params: {route: 'report'}, timeout: 10000}
+    })
+  }
+
+  var Patient2 = function () {
+    return $resource(CONFIG.baseTwoUrl + ':path/:route', {path: 'patient'}, {
+      getPatientDetail: {method: 'GET', params: {route: 'detail'}, timeout: 100000}
+    })
+  }
+
+  var Forum = function () {
+    return $resource(CONFIG.baseTwoUrl + ':path/:route', {path: 'forum'}, {
+      allposts: {method: 'GET', params: {route: 'allposts'}, timeout: 10000},
+      myposts: {method: 'GET', params: {route: 'myposts'}, timeout: 10000},
+      mycollection: {method: 'GET', params: {route: 'mycollection'}, timeout: 10000},
+      newpost: {method: 'POST', params: {route: 'posting'}, timeout: 100000},
+      favorite: {method: 'POST', params: {route: 'favorite'}, timeout: 100000},
+      deletefavorite: {method: 'POST', params: {route: 'deletefavorite'}, timeout: 100000},
+      deletepost: {method: 'POST', params: {route: 'deletepost'}, timeout: 100000},
+      postcontent: {method: 'GET', params: {route: 'postcontent'}, timeout: 100000},
+      deletecomment: {method: 'POST', params: {route: 'deletecomment'}, timeout: 100000},
+      comment: {method: 'POST', params: {route: 'comment'}, timeout: 100000},
+      reply: {method: 'POST', params: {route: 'reply'}, timeout: 100000}
     })
   }
 
@@ -966,9 +620,9 @@ angular.module('kidney.services', ['ionic', 'ngResource'])
     $interval(function () {
       abort = $q.defer()
       serve.Dict = Dict()
-            // serve.Task1 = Task1();
-      serve.Task = Task()
-      serve.Compliance = Compliance()
+      serve.Task1 = Task1()
+      serve.Task2 = Task2()
+      // serve.Compliance = Compliance()
       serve.Counsel = Counsel()
       serve.Patient = Patient()
       serve.Doctor = Doctor()
@@ -977,20 +631,28 @@ angular.module('kidney.services', ['ionic', 'ngResource'])
       serve.VitalSign = VitalSign()
       serve.Account = Account()
       serve.Message = Message()
-      serve.New = New()
       serve.Communication = Communication()
+      serve.MassCommunication = MassCommunication()
       serve.User = User()
+      serve.Mywechat = Mywechat()
       serve.Insurance = Insurance()
-      serve.wechat = wechat()
-      serve.jm = jm()
-      serve.Expense = Expense()
+      serve.New = New()
+      // serve.Expense = Expense()
+      serve.Order = Order()
       serve.Advice = Advice()
+      serve.version = version()
+      serve.labtestImport = labtestImport()
+      serve.services = services()
+      serve.Doctor2 = Doctor2()
+      serve.getPatientData = getPatientData()
+      serve.Patient2 = Patient2()
+      serve.Forum = Forum()
     }, 0, 1)
   }
   serve.Dict = Dict()
-    // serve.Task1 = Task1();
-  serve.Task = Task()
-  serve.Compliance = Compliance()
+  serve.Task1 = Task1()
+  serve.Task2 = Task2()
+  // serve.Compliance = Compliance()
   serve.Counsel = Counsel()
   serve.Patient = Patient()
   serve.Doctor = Doctor()
@@ -999,34 +661,41 @@ angular.module('kidney.services', ['ionic', 'ngResource'])
   serve.VitalSign = VitalSign()
   serve.Account = Account()
   serve.Message = Message()
-  serve.New = New()
   serve.Communication = Communication()
+  serve.MassCommunication = MassCommunication()
   serve.User = User()
+  serve.Mywechat = Mywechat()
   serve.Insurance = Insurance()
-  serve.wechat = wechat()
-  serve.jm = jm()
-  serve.Expense = Expense()
+  serve.New = New()
+  // serve.Expense = Expense()
+  serve.Order = Order()
   serve.Advice = Advice()
+  serve.version = version()
+  serve.labtestImport = labtestImport()
+  serve.services = services()
+  serve.Doctor2 = Doctor2()
+  serve.getPatientData = getPatientData()
+  serve.Patient2 = Patient2()
+  serve.Forum = Forum()
   return serve
 }])
-.factory('Dict', ['$q', 'Data', 'checknetwork', function ($q, Data, checknetwork) {
+.factory('Dict', ['$q', 'Data', function ($q, Data) {
   var self = this
     // params->{
             //  category:'patient_class'
             // }
-  self.getDiseaseType = function (params) {
-    var deferred = $q.defer()
-    Data.Dict.getDiseaseType(
-            params,
-            function (data, headers) {
-              deferred.resolve(data)
-            },
-            function (err) {
-              checknetwork.checknetwork(err)
-              deferred.reject(err)
-            })
-    return deferred.promise
-  }
+  // self.getDiseaseType = function (params) {
+  //   var deferred = $q.defer()
+  //   Data.Dict.getDiseaseType(
+  //           params,
+  //           function (data, headers) {
+  //             deferred.resolve(data)
+  //           },
+  //           function (err) {
+  //             deferred.reject(err)
+  //           })
+  //   return deferred.promise
+  // }
     // params->{
             //  level:'3',//1获取省份，2获取城市，3获取区县
             //  province:"33", //定位到某个具体省份时需要输入
@@ -1041,7 +710,6 @@ angular.module('kidney.services', ['ionic', 'ngResource'])
               deferred.resolve(data)
             },
             function (err) {
-              checknetwork.checknetwork(err)
               deferred.reject(err)
             })
     return deferred.promise
@@ -1058,7 +726,6 @@ angular.module('kidney.services', ['ionic', 'ngResource'])
               deferred.resolve(data)
             },
             function (err) {
-              checknetwork.checknetwork(err)
               deferred.reject(err)
             })
     return deferred.promise
@@ -1074,7 +741,6 @@ angular.module('kidney.services', ['ionic', 'ngResource'])
               deferred.resolve(data)
             },
             function (err) {
-              checknetwork.checknetwork(err)
               deferred.reject(err)
             })
     return deferred.promise
@@ -1082,40 +748,39 @@ angular.module('kidney.services', ['ionic', 'ngResource'])
     // params->{
     //    category:'MessageType'
     // }
-  self.typeOne = function (params) {
-    var deferred = $q.defer()
-    Data.Dict.typeOne(
-            params,
-            function (data, headers) {
-              deferred.resolve(data)
-            },
-            function (err) {
-              checknetwork.checknetwork(err)
-              deferred.reject(err)
-            })
-    return deferred.promise
-  }
+  // self.typeOne = function (params) {
+  //   var deferred = $q.defer()
+  //   Data.Dict.typeOne(
+  //           params,
+  //           function (data, headers) {
+  //             deferred.resolve(data)
+  //           },
+  //           function (err) {
+  //             deferred.reject(err)
+  //           })
+  //   return deferred.promise
+  // }
   return self
 }])
 
-.factory('Task', ['$q', 'Data', 'checknetwork', function ($q, Data, checknetwork) {
+.factory('Task', ['$q', 'Data', function ($q, Data) {
   var self = this
     // params->{
             //  userId:'U201704050002',//usderId="Admin"，sortNo为空时获取系统全部任务模板，sortNo="1"时获取指定任务模板，userId为用户ID时获取指定用户的任务信息
             //  sortNo:'1'
            // }
-    // self.getTask = function(params){
-    //     var deferred = $q.defer();
-    //     Data.Task1.getTask(
-    //         params,
-    //         function(data, headers){
-    //             deferred.resolve(data);
-    //         },
-    //         function(err){
-    //             deferred.reject(err);
-    //     });
-    //     return deferred.promise;
-    // };
+  // self.getTask = function (params) {
+  //   var deferred = $q.defer()
+  //   Data.Task1.getTask(
+  //           params,
+  //           function (data, headers) {
+  //             deferred.resolve(data)
+  //           },
+  //           function (err) {
+  //             deferred.reject(err)
+  //           })
+  //   return deferred.promise
+  // }
     // params->{
             //  userId:'U201704050002',//unique
             //  sortNo:1,
@@ -1123,32 +788,30 @@ angular.module('kidney.services', ['ionic', 'ngResource'])
             //  code:'BloodPressure',
             //  status:'0'
            // }
-  self.changeTaskstatus = function (params) {
-    var deferred = $q.defer()
-    Data.Task.changeTaskstatus(
-            params,
-            function (data, headers) {
-              deferred.resolve(data)
-            },
-            function (err) {
-              checknetwork.checknetwork(err)
-              deferred.reject(err)
-            })
-    return deferred.promise
-  }
+  // self.changeTaskstatus = function (params) {
+  //   var deferred = $q.defer()
+  //   Data.Task2.changeTaskstatus(
+  //           params,
+  //           function (data, headers) {
+  //             deferred.resolve(data)
+  //           },
+  //           function (err) {
+  //             deferred.reject(err)
+  //           })
+  //   return deferred.promise
+  // }
     // params->{
             //  userId:'U201704050002',//unique
             //  sortNo:1,
            // }
   self.insertTask = function (params) {
     var deferred = $q.defer()
-    Data.Task.insertTask(
+    Data.Task2.insertTask(
             params,
             function (data, headers) {
               deferred.resolve(data)
             },
             function (err) {
-              checknetwork.checknetwork(err)
               deferred.reject(err)
             })
     return deferred.promise
@@ -1160,29 +823,27 @@ angular.module('kidney.services', ['ionic', 'ngResource'])
             //  code:'BloodPressure',
             //  startTime:'2017-12-12'
            // }
-  self.changeTasktime = function (params) {
-    var deferred = $q.defer()
-    Data.Task.changeTasktime(
-            params,
-            function (data, headers) {
-              deferred.resolve(data)
-            },
-            function (err) {
-              checknetwork.checknetwork(err)
-              deferred.reject(err)
-            })
-    return deferred.promise
-  }
+  // self.changeTasktime = function (params) {
+  //   var deferred = $q.defer()
+  //   Data.Task2.changeTasktime(
+  //           params,
+  //           function (data, headers) {
+  //             deferred.resolve(data)
+  //           },
+  //           function (err) {
+  //             deferred.reject(err)
+  //           })
+  //   return deferred.promise
+  // }
 
   self.getUserTask = function (params) {
     var deferred = $q.defer()
-    Data.Task.getUserTask(
+    Data.Task2.getUserTask(
             params,
             function (data, headers) {
               deferred.resolve(data)
             },
             function (err) {
-              checknetwork.checknetwork(err)
               deferred.reject(err)
             })
     return deferred.promise
@@ -1190,13 +851,12 @@ angular.module('kidney.services', ['ionic', 'ngResource'])
 
   self.updateUserTask = function (params) {
     var deferred = $q.defer()
-    Data.Task.updateUserTask(
+    Data.Task2.updateUserTask(
             params,
             function (data, headers) {
               deferred.resolve(data)
             },
             function (err) {
-              checknetwork.checknetwork(err)
               deferred.reject(err)
             })
     return deferred.promise
@@ -1204,49 +864,66 @@ angular.module('kidney.services', ['ionic', 'ngResource'])
 
   return self
 }])
-.factory('Compliance', ['$q', 'Data', 'checknetwork', function ($q, Data, checknetwork) {
+
+// .factory('Compliance', ['$q', 'Data', function ($q, Data) {
+//   var self = this
+//     // params->{
+//             // "userId": "U201704050002",
+//             // "type": "Measure",
+//             // "code": "Weight",
+//             // "date": "2017-12-13",
+//             // "status": 0,
+//             // "description": ""
+//            // }
+//   self.postcompliance = function (params) {
+//     var deferred = $q.defer()
+//     Data.Compliance.postcompliance(
+//             params,
+//             function (data, headers) {
+//               deferred.resolve(data)
+//             },
+//             function (err) {
+//               deferred.reject(err)
+//             })
+//     return deferred.promise
+//   }
+//     // params->{
+//             //  userId:'U201704050002',//date为空时获取指定用户的全部任务执行记录，date不为空时获取指定用户某一天的任务执行记录
+//             //  date:'2017-12-13'
+//            // }
+//   self.getcompliance = function (params) {
+//     var deferred = $q.defer()
+//     Data.Compliance.getcompliance(
+//             params,
+//             function (data, headers) {
+//               deferred.resolve(data)
+//             },
+//             function (err) {
+//               deferred.reject(err)
+//             })
+//     return deferred.promise
+//   }
+//   return self
+// }])
+
+.factory('MassCommunication', ['$q', 'Data', 'Storage', function ($q, Data, Storage) {
   var self = this
-    // params->{
-            // "userId": "U201704050002",
-            // "type": "Measure",
-            // "code": "Weight",
-            // "date": "2017-12-13",
-            // "status": 0,
-            // "description": ""
-           // }
-  self.postcompliance = function (params) {
+  self.massToPatient = function (params) {
     var deferred = $q.defer()
-    Data.Compliance.postcompliance(
+    Data.MassCommunication.massToPatient(
             params,
             function (data, headers) {
               deferred.resolve(data)
             },
             function (err) {
-              checknetwork.checknetwork(err)
-              deferred.reject(err)
-            })
-    return deferred.promise
-  }
-    // params->{
-            //  userId:'U201704050002',//date为空时获取指定用户的全部任务执行记录，date不为空时获取指定用户某一天的任务执行记录
-            //  date:'2017-12-13'
-           // }
-  self.getcompliance = function (params) {
-    var deferred = $q.defer()
-    Data.Compliance.getcompliance(
-            params,
-            function (data, headers) {
-              deferred.resolve(data)
-            },
-            function (err) {
-              checknetwork.checknetwork(err)
               deferred.reject(err)
             })
     return deferred.promise
   }
   return self
-}])
-.factory('Communication', ['$q', 'Data', 'Storage', 'checknetwork', function ($q, Data, Storage, checknetwork) {
+} ])
+
+.factory('Communication', ['$q', 'Data', 'Storage', function ($q, Data, Storage) {
   var self = this
     // params->0:{
             //      teamId:'teampost2',
@@ -1263,22 +940,19 @@ angular.module('kidney.services', ['ionic', 'ngResource'])
               deferred.resolve(data)
             },
             function (err) {
-              checknetwork.checknetwork(err)
               deferred.reject(err)
             })
     return deferred.promise
   }
 
-    // params->0:{counselId:'counsel01'}
-  self.getCounselReport = function (params) {
+  self.conclusion = function (params) {
     var deferred = $q.defer()
-    Data.Communication.getCounselReport(
+    Data.Communication.conclusion(
             params,
             function (data, headers) {
               deferred.resolve(data)
             },
             function (err) {
-              checknetwork.checknetwork(err)
               deferred.reject(err)
             })
     return deferred.promise
@@ -1294,7 +968,20 @@ angular.module('kidney.services', ['ionic', 'ngResource'])
               deferred.resolve(data)
             },
             function (err) {
-              checknetwork.checknetwork(err)
+              deferred.reject(err)
+            })
+    return deferred.promise
+  }
+
+    // params->0:{counselId:'counsel01'}
+  self.getCounselReport = function (params) {
+    var deferred = $q.defer()
+    Data.Communication.getCounselReport(
+            params,
+            function (data, headers) {
+              deferred.resolve(data)
+            },
+            function (err) {
               deferred.reject(err)
             })
     return deferred.promise
@@ -1309,7 +996,19 @@ angular.module('kidney.services', ['ionic', 'ngResource'])
               deferred.resolve(data)
             },
             function (err) {
-              checknetwork.checknetwork(err)
+              deferred.reject(err)
+            })
+    return deferred.promise
+  }
+
+  self.postCommunication = function (params) {
+    var deferred = $q.defer()
+    Data.Communication.postCommunication(
+            params,
+            function (data, headers) {
+              deferred.resolve(data)
+            },
+            function (err) {
               deferred.reject(err)
             })
     return deferred.promise
@@ -1323,11 +1022,11 @@ angular.module('kidney.services', ['ionic', 'ngResource'])
               deferred.resolve(data)
             },
             function (err) {
-              checknetwork.checknetwork(err)
               deferred.reject(err)
             })
     return deferred.promise
   }
+
     // params->0:{
             //      teamId:'teampost2',
             //      membersuserId:'id1',
@@ -1341,7 +1040,6 @@ angular.module('kidney.services', ['ionic', 'ngResource'])
               deferred.resolve(data)
             },
             function (err) {
-              checknetwork.checknetwork(err)
               deferred.reject(err)
             })
     return deferred.promise
@@ -1359,7 +1057,6 @@ angular.module('kidney.services', ['ionic', 'ngResource'])
               deferred.resolve(data)
             },
             function (err) {
-              checknetwork.checknetwork(err)
               deferred.reject(err)
             })
     return deferred.promise
@@ -1380,7 +1077,6 @@ angular.module('kidney.services', ['ionic', 'ngResource'])
               deferred.resolve(data)
             },
             function (err) {
-              checknetwork.checknetwork(err)
               deferred.reject(err)
             })
     return deferred.promise
@@ -1403,21 +1099,6 @@ angular.module('kidney.services', ['ionic', 'ngResource'])
               deferred.resolve(data)
             },
             function (err) {
-              checknetwork.checknetwork(err)
-              deferred.reject(err)
-            })
-    return deferred.promise
-  }
-
-  self.conclusion = function (params) {
-    var deferred = $q.defer()
-    Data.Communication.conclusion(
-            params,
-            function (data, headers) {
-              deferred.resolve(data)
-            },
-            function (err) {
-              checknetwork.checknetwork(err)
               deferred.reject(err)
             })
     return deferred.promise
@@ -1425,7 +1106,8 @@ angular.module('kidney.services', ['ionic', 'ngResource'])
 
   return self
 }])
-.factory('User', ['$q', 'Data', 'checknetwork', function ($q, Data, checknetwork) {
+
+.factory('User', ['$q', 'Data', function ($q, Data) {
   var self = this
     // params->{
         // phoneNo:"18768113669",
@@ -1441,7 +1123,6 @@ angular.module('kidney.services', ['ionic', 'ngResource'])
               deferred.resolve(data)
             },
             function (err) {
-              checknetwork.checknetwork(err)
               deferred.reject(err)
             })
     return deferred.promise
@@ -1459,7 +1140,6 @@ angular.module('kidney.services', ['ionic', 'ngResource'])
               deferred.resolve(data)
             },
             function (err) {
-              checknetwork.checknetwork(err)
               deferred.reject(err)
             })
     return deferred.promise
@@ -1474,7 +1154,6 @@ angular.module('kidney.services', ['ionic', 'ngResource'])
               deferred.resolve(data)
             },
             function (err) {
-              checknetwork.checknetwork(err)
               deferred.reject(err)
             })
     return deferred.promise
@@ -1490,7 +1169,6 @@ angular.module('kidney.services', ['ionic', 'ngResource'])
               deferred.resolve(data)
             },
             function (err) {
-              checknetwork.checknetwork(err)
               deferred.reject(err)
             })
     return deferred.promise
@@ -1510,7 +1188,6 @@ angular.module('kidney.services', ['ionic', 'ngResource'])
               deferred.resolve(data)
             },
             function (err) {
-              checknetwork.checknetwork(err)
               deferred.reject(err)
             })
     return deferred.promise
@@ -1526,13 +1203,12 @@ angular.module('kidney.services', ['ionic', 'ngResource'])
               deferred.resolve(data)
             },
             function (err) {
-              checknetwork.checknetwork(err)
               deferred.reject(err)
             })
     return deferred.promise
   }
 
-    // params->{username:"18768113668"}
+    // params->{phoneNo:"18768113668"}
     // 004
   self.getUserId = function (params) {
     var deferred = $q.defer()
@@ -1542,7 +1218,6 @@ angular.module('kidney.services', ['ionic', 'ngResource'])
               deferred.resolve(data)
             },
             function (err) {
-              checknetwork.checknetwork(err)
               deferred.reject(err)
             })
     return deferred.promise
@@ -1560,7 +1235,6 @@ angular.module('kidney.services', ['ionic', 'ngResource'])
               deferred.resolve(data)
             },
             function (err) {
-              checknetwork.checknetwork(err)
               deferred.reject(err)
             })
     return deferred.promise
@@ -1579,27 +1253,24 @@ angular.module('kidney.services', ['ionic', 'ngResource'])
               deferred.resolve(data)
             },
             function (err) {
-              checknetwork.checknetwork(err)
               deferred.reject(err)
             })
     return deferred.promise
   }
 
-    // params->{openId:"U201703310032"} //20170619 后端删除该方法，与getUserID方法合并
-    // self.getUserIDbyOpenId = function(params){
-    //     var deferred = $q.defer();
-    //     Data.User.getUserIDbyOpenId(
-    //         params,
-    //         function(data, headers){
-    //             deferred.resolve(data);
-    //         },
-    //         function(err){
-    //             deferred.reject(err);
-    //     });
-    //     return deferred.promise;
-    // }
+  // self.getUserIDbyOpenId = function (params) {
+  //   var deferred = $q.defer()
+  //   Data.User.getUserIDbyOpenId(
+  //           params,
+  //           function (data, headers) {
+  //             deferred.resolve(data)
+  //           },
+  //           function (err) {
+  //             deferred.reject(err)
+  //           })
+  //   return deferred.promise
+  // }
 
-    // params->{phoneNo:"",openId:"U201703310032"}
   self.setOpenId = function (params) {
     var deferred = $q.defer()
     Data.User.setOpenId(
@@ -1608,28 +1279,11 @@ angular.module('kidney.services', ['ionic', 'ngResource'])
               deferred.resolve(data)
             },
             function (err) {
-              checknetwork.checknetwork(err)
               deferred.reject(err)
             })
     return deferred.promise
   }
 
-    // params->{type:"",userId:"U201703310032"}type:(1:doctorwechat,2:patientwechat,3:doctorapp,4:patientapp,5:test)
-  self.getMessageOpenId = function (params) {
-    var deferred = $q.defer()
-    Data.User.getMessageOpenId(
-            params,
-            function (data, headers) {
-              deferred.resolve(data)
-            },
-            function (err) {
-              checknetwork.checknetwork(err)
-              deferred.reject(err)
-            })
-    return deferred.promise
-  }
-
-    // params->{type:"",openId:"",userId:""}type:(1:doctorwechat,2:patientwechat,3:doctorapp,4:patientapp,5:test)
   self.setMessageOpenId = function (params) {
     var deferred = $q.defer()
     Data.User.setMessageOpenId(
@@ -1638,32 +1292,43 @@ angular.module('kidney.services', ['ionic', 'ngResource'])
               deferred.resolve(data)
             },
             function (err) {
-              checknetwork.checknetwork(err)
+              deferred.reject(err)
+            })
+    return deferred.promise
+  }
+
+  self.logIn = function (params) {
+    var deferred = $q.defer()
+    Data.User.logIn(
+            params,
+            function (data, headers) {
+              deferred.resolve(data)
+            },
+            function (err) {
               deferred.reject(err)
             })
     return deferred.promise
   }
 
     // params-> username:'doc01'
-  self.One = function (params) {
-    var deferred = $q.defer()
-    Data.User.One(
-            params,
-            function (data, headers) {
-              deferred.resolve(data)
-            },
-            function (err) {
-              checknetwork.checknetwork(err)
-              deferred.reject(err)
-            }
-        )
-    return deferred.promise
-  }
+  // self.One = function (params) {
+  //   var deferred = $q.defer()
+  //   Data.User.One(
+  //           params,
+  //           function (data, headers) {
+  //             deferred.resolve(data)
+  //           },
+  //           function (err) {
+  //             deferred.reject(err)
+  //           }
+  //       )
+  //   return deferred.promise
+  // }
 
   return self
 }])
 
-.factory('Health', ['$q', 'Data', 'checknetwork', function ($q, Data, checknetwork) {
+.factory('Health', ['$q', 'Data', function ($q, Data) {
   var self = this
     // params->{
             //  userId:'U201704010003',//unique
@@ -1682,7 +1347,6 @@ angular.module('kidney.services', ['ionic', 'ngResource'])
               deferred.resolve(data)
             },
             function (err) {
-              checknetwork.checknetwork(err)
               deferred.reject(err)
             })
     return deferred.promise
@@ -1699,7 +1363,6 @@ angular.module('kidney.services', ['ionic', 'ngResource'])
               deferred.resolve(data)
             },
             function (err) {
-              checknetwork.checknetwork(err)
               deferred.reject(err)
             })
     return deferred.promise
@@ -1717,7 +1380,6 @@ angular.module('kidney.services', ['ionic', 'ngResource'])
               deferred.resolve(data)
             },
             function (err) {
-              checknetwork.checknetwork(err)
               deferred.reject(err)
             })
     return deferred.promise
@@ -1739,7 +1401,6 @@ angular.module('kidney.services', ['ionic', 'ngResource'])
               deferred.resolve(data)
             },
             function (err) {
-              checknetwork.checknetwork(err)
               deferred.reject(err)
             })
     return deferred.promise
@@ -1758,14 +1419,14 @@ angular.module('kidney.services', ['ionic', 'ngResource'])
               deferred.resolve(data)
             },
             function (err) {
-              checknetwork.checknetwork(err)
               deferred.reject(err)
             })
     return deferred.promise
   }
   return self
 }])
-.factory('Message', ['$q', 'Data', 'checknetwork', function ($q, Data, checknetwork) {
+
+.factory('Message', ['$q', 'Data', function ($q, Data) {
   var self = this
     // params->0:{
     //    userId:'U201704120001',
@@ -1779,14 +1440,704 @@ angular.module('kidney.services', ['ionic', 'ngResource'])
               deferred.resolve(data)
             },
             function (err) {
-              checknetwork.checknetwork(err)
+              deferred.reject(err)
+            })
+    return deferred.promise
+  }
+
+  self.insertMessages = function (params) {
+    var deferred = $q.defer()
+    Data.Message.insertMessages(
+            params,
+            function (data, headers) {
+              deferred.resolve(data)
+            },
+            function (err) {
+              deferred.reject(err)
+            })
+    return deferred.promise
+  }
+
+  self.editStatus = function (params) {
+    var deferred = $q.defer()
+    Data.Message.editStatus(
+            params,
+            function (data, headers) {
+              deferred.resolve(data)
+            },
+            function (err) {
               deferred.reject(err)
             })
     return deferred.promise
   }
   return self
 }])
-.factory('New', ['$q', 'Data', 'arrTool', 'checknetwork', function ($q, Data, arrTool, checknetwork) {
+
+.factory('Account', ['$q', 'Data', function ($q, Data) {
+  var self = this
+    // params->0:{userId:'p01'}
+  self.getAccountInfo = function (params) {
+    var deferred = $q.defer()
+    Data.Account.getAccountInfo(
+            params,
+            function (data, headers) {
+              deferred.resolve(data)
+            },
+            function (err) {
+              deferred.reject(err)
+            })
+    return deferred.promise
+  }
+  self.modifyCounts = function (params) {
+    var deferred = $q.defer()
+    Data.Account.modifyCounts(
+            params,
+            function (data, headers) {
+              deferred.resolve(data)
+            },
+            function (err) {
+              deferred.reject(err)
+            })
+    return deferred.promise
+  }
+  self.getCounts = function (params) {
+    var deferred = $q.defer()
+    Data.Account.getCounts(
+            params,
+            function (data, headers) {
+              deferred.resolve(data)
+            },
+            function (err) {
+              deferred.reject(err)
+            })
+    return deferred.promise
+  }
+  return self
+}])
+
+.factory('Order', ['$q', 'Data', function ($q, Data) {
+  var self = this
+  self.order = function (params) {
+    var deferred = $q.defer()
+    Data.Order.order(
+            params,
+            function (data, headers) {
+              deferred.resolve(data)
+            },
+            function (err) {
+              deferred.reject(err)
+            })
+    return deferred.promise
+  }
+  return self
+}])
+
+.factory('VitalSign', ['$q', 'Data', function ($q, Data) {
+  var self = this
+    // params->0:{userId:'p01',type:'type1'}
+  self.getVitalSigns = function (params) {
+    var deferred = $q.defer()
+    Data.VitalSign.getVitalSigns(
+            params,
+            function (data, headers) {
+              deferred.resolve(data)
+            },
+            function (err) {
+              deferred.reject(err)
+            })
+    return deferred.promise
+  }
+  return self
+}])
+
+.factory('Comment', ['$q', 'Data', function ($q, Data) {
+  var self = this
+    // params->0:{userId:'doc01'}
+  // self.getComments = function (params) {
+  //   var deferred = $q.defer()
+  //   Data.Comment.getComments(
+  //           params,
+  //           function (data, headers) {
+  //             deferred.resolve(data)
+  //           },
+  //           function (err) {
+  //             deferred.reject(err)
+  //           })
+  //   return deferred.promise
+  // }
+  return self
+}])
+
+.factory('Patient', ['$q', 'Data', function ($q, Data) {
+  var self = this
+    // params->0:{userId:'p01'}
+  // self.getPatientDetail = function (params) {
+  //   var deferred = $q.defer()
+  //   Data.Patient.getPatientDetail(
+  //           params,
+  //           function (data, headers) {
+  //             deferred.resolve(data)
+  //           },
+  //           function (err) {
+  //             deferred.reject(err)
+  //           })
+  //   return deferred.promise
+  // }
+
+    // params->0:{userId:'p01'}
+  // self.getMyDoctors = function (params) {
+  //   var deferred = $q.defer()
+  //   Data.Patient.getMyDoctors(
+  //           params,
+  //           function (data, headers) {
+  //             deferred.resolve(data)
+  //           },
+  //           function (err) {
+  //             deferred.reject(err)
+  //           })
+  //   return deferred.promise
+  // }
+
+    // params->0:{workUnit:'浙江省人民医院'}
+    //        1:{workUnit:'浙江省人民医院',name:'医生01'}
+  self.getDoctorLists = function (params) {
+    var deferred = $q.defer()
+    Data.Patient.getDoctorLists(
+            params,
+            function (data, headers) {
+              deferred.resolve(data)
+            },
+            function (err) {
+              deferred.reject(err)
+            })
+    return deferred.promise
+  }
+
+  self.replacePhoto = function (params) {
+    var deferred = $q.defer()
+    Data.Patient.replacePhoto(
+            params,
+            function (data, headers) {
+              deferred.resolve(data)
+            },
+            function (err) {
+              deferred.reject(err)
+            })
+    return deferred.promise
+  }
+
+    // params->0:{userId:'p01'}
+  // self.getCounselRecords = function (params) {
+  //   var deferred = $q.defer()
+  //   Data.Patient.getCounselRecords(
+  //           params,
+  //           function (data, headers) {
+  //             deferred.resolve(data)
+  //           },
+  //           function (err) {
+  //             deferred.reject(err)
+  //           })
+  //   return deferred.promise
+  // }
+
+    // params->0:{
+            //     patientId:'ppost01',
+            //     doctorId:'doc01',
+            //     diagname:'慢性肾炎',
+            //     diagtime:'2017-04-06',
+            //     diagprogress:'吃药',
+            //     diagcontent:'blabla啥啥啥的'
+            // }
+  self.insertDiagnosis = function (params) {
+    var deferred = $q.defer()
+    Data.Patient.insertDiagnosis(
+            params,
+            function (data, headers) {
+              deferred.resolve(data)
+            },
+            function (err) {
+              deferred.reject(err)
+            })
+    return deferred.promise
+  }
+
+    // params->0:{
+            //     userId:'ppost01',
+            //     name:'患者xx',
+            //     birthday:'1987-03-25',
+            //     gender:2,
+            //     IDNo:123456123456781234,
+            //     height:183,
+            //     weight:70,
+            //     bloodType:2,
+            //     class:'class1',
+            //     class_info:'info_1',
+            //     operationTime:'2017-04-05',
+            //     hypertension:1,
+            //     photoUrl:'http://photo/ppost01.jpg'
+            // }
+  // self.newPatientDetail = function (params) {
+  //   var deferred = $q.defer()
+  //   Data.Patient.newPatientDetail(
+  //           params,
+  //           function (data, headers) {
+  //             deferred.resolve(data)
+  //           },
+  //           function (err) {
+  //             deferred.reject(err)
+  //           })
+  //   return deferred.promise
+  // }
+
+    // params->0:{
+                // userId:'ppost01',
+                // name:'新名字2',
+                // birthday:1987-03-03,
+                // gender:1,
+                // IDNo:123456123456781234,
+                // height:183,
+                // weight:70,
+                // bloodType:2,
+                // class:'class1',
+                // class_info:'info3',
+                // hypertension:1,
+                // photoUrl:'http://photo/ppost01.jpg'
+            // }
+  // self.editPatientDetail = function (params) {
+  //   var deferred = $q.defer()
+  //   Data.Patient.editPatientDetail(
+  //           params,
+  //           function (data, headers) {
+  //             deferred.resolve(data)
+  //           },
+  //           function (err) {
+  //             deferred.reject(err)
+  //           })
+  //   return deferred.promise
+  // }
+
+  return self
+}])
+
+.factory('Doctor', ['$q', 'Data', function ($q, Data) {
+  var self = this
+    // params->0:{
+           //   userId:'docpostTest',//unique
+           //   name:'姓名',
+           //   birthday:'1956-05-22',
+           //   gender:1,
+           //   workUnit:'浙江省人民医院',
+           //   department:'肾内科',
+           //   title:'副主任医师',
+           //   major:'慢性肾炎',
+           //   description:'经验丰富',
+           //   photoUrl:'http://photo/docpost3.jpg',
+           //   charge1:150,
+           //   charge2:50
+           // }
+  self.postDocBasic = function (params) {
+    var deferred = $q.defer()
+    Data.Doctor.postDocBasic(
+            params,
+            function (data, headers) {
+              deferred.resolve(data)
+            },
+            function (err) {
+              deferred.reject(err)
+            })
+    return deferred.promise
+  }
+
+    // params->0:{
+       //   userId:'doc01'
+       // }
+  self.getRecentDoctorList = function (params) {
+    var deferred = $q.defer()
+    Data.Doctor.getRecentDoctorList(
+            params,
+            function (data, headers) {
+              deferred.resolve(data)
+            },
+            function (err) {
+              deferred.reject(err)
+            })
+    return deferred.promise
+  }
+
+    // params->0:{
+           //   userId:'doc01'
+           // }
+    // 这个可以获取别人的信息
+  self.doctor = function (params) {
+    var deferred = $q.defer()
+    Data.Doctor.doctor(
+            params,
+            function (data, headers) {
+              deferred.resolve(data)
+            },
+            function (err) {
+              deferred.reject(err)
+            })
+    return deferred.promise
+  }
+    // 只能获取自己的信息
+  self.getDoctorInfo = function (params) {
+    var deferred = $q.defer()
+    Data.Doctor.getDoctorInfo(
+            params,
+            function (data, headers) {
+              deferred.resolve(data)
+            },
+            function (err) {
+              deferred.reject(err)
+            })
+    return deferred.promise
+  }
+    // params->0:{
+           //   userId:'doc01'
+           // }
+  self.getMyGroupList = function (params) {
+    var deferred = $q.defer()
+    Data.Doctor.getMyGroupList(
+            params,
+            function (data, headers) {
+              deferred.resolve(data.results)
+            },
+            function (err) {
+              deferred.reject(err)
+            })
+    return deferred.promise
+  }
+
+    // params->0:{
+           //   userId:'doc01'
+           // }
+  self.getRecentDoctorList = function (params) {
+    var deferred = $q.defer()
+    Data.Doctor.getRecentDoctorList(
+            params,
+            function (data, headers) {
+              deferred.resolve(data)
+            },
+            function (err) {
+              deferred.reject(err)
+            })
+    return deferred.promise
+  }
+
+    // params->0:{
+           //   teamId:'team1',
+           //   status:1
+           // }
+  self.getGroupPatientList = function (params) {
+    var deferred = $q.defer()
+    Data.Doctor.getGroupPatientList(
+            params,
+            function (data, headers) {
+              deferred.resolve(data)
+            },
+            function (err) {
+              deferred.reject(err)
+            })
+    return deferred.promise
+  }
+
+  self.editDoctorDetail = function (params) {
+    var deferred = $q.defer()
+    Data.Doctor.editDoctorDetail(
+            params,
+            function (data, headers) {
+              deferred.resolve(data)
+            },
+            function (err) {
+              deferred.reject(err)
+            })
+    return deferred.promise
+  }
+
+    // params->0:{
+           //   userId:'doc01',
+           //   day:0,//0-6->周一，周二...周日
+           //   time:0//0->上午 1->下午
+           // }
+  self.insertSchedule = function (params) {
+    var deferred = $q.defer()
+    Data.Doctor.insertSchedule(
+            params,
+            function (data, headers) {
+              deferred.resolve(data)
+            },
+            function (err) {
+              deferred.reject(err)
+            })
+    return deferred.promise
+  }
+
+    // params->0:{
+           //   userId:'doc01'
+           // }
+  self.getSchedules = function (params) {
+    var deferred = $q.defer()
+    Data.Doctor.getSchedules(
+            params,
+            function (data, headers) {
+              deferred.resolve(data)
+            },
+            function (err) {
+              deferred.reject(err)
+            })
+    return deferred.promise
+  }
+
+    // params->0:{
+           //   userId:'doc01',
+           //   day:0,//0-6->周一，周二...周日
+           //   time:0//0->上午 1->下午
+           // }
+  self.deleteSchedule = function (params) {
+    var deferred = $q.defer()
+    Data.Doctor.deleteSchedule(
+            params,
+            function (data, headers) {
+              deferred.resolve(data)
+            },
+            function (err) {
+              deferred.reject(err)
+            })
+    return deferred.promise
+  }
+
+    // params->0:{
+    //   userId:'doc01'
+    // }
+  self.getSuspendTime = function (params) {
+    var deferred = $q.defer()
+    Data.Doctor.getSuspendTime(
+            params,
+            function (data, headers) {
+              deferred.resolve(data)
+            },
+            function (err) {
+              deferred.reject(err)
+            })
+    return deferred.promise
+  }
+
+    // params->0:{
+           //   userId:'doc01',
+           //   start:new Date(),
+           //   end:new Date(),
+           // }
+  self.insertSuspendTime = function (params) {
+    var deferred = $q.defer()
+    Data.Doctor.insertSuspendTime(
+            params,
+            function (data, headers) {
+              deferred.resolve(data)
+            },
+            function (err) {
+              deferred.reject(err)
+            })
+    return deferred.promise
+  }
+
+    // params->0:{
+           //   userId:'doc01',
+           //   start:new Date(),
+           //   end:new Date(),
+           // }
+  self.deleteSuspendTime = function (params) {
+    var deferred = $q.defer()
+    Data.Doctor.deleteSuspendTime(
+            params,
+            function (data, headers) {
+              deferred.resolve(data)
+            },
+            function (err) {
+              deferred.reject(err)
+            })
+    return deferred.promise
+  }
+
+    // params->empty
+  self.getDocNum = function () {
+    var deferred = $q.defer()
+    Data.Doctor.getDocNum(
+            function (data, headers) {
+              deferred.resolve(data)
+            },
+            function (err) {
+              deferred.reject(err)
+            })
+    return deferred.promise
+  }
+    // params->userId:'doc01'
+  self.getAliPayAccount = function (params) {
+    var deferred = $q.defer()
+    Data.Doctor.getAliPayAccount(
+            params,
+            function (data, headers) {
+              deferred.resolve(data)
+            },
+            function (err) {
+              deferred.reject(err)
+            })
+    return deferred.promise
+  }
+    // params->{userId:'doc01',aliPayAccount:'abc@def.com'}
+  self.editAliPayAccount = function (params) {
+    var deferred = $q.defer()
+    Data.Doctor.editAliPayAccount(
+            params,
+            function (data, headers) {
+              deferred.resolve(data)
+            },
+            function (err) {
+              deferred.reject(err)
+            }
+        )
+    return deferred.promise
+  }
+
+  return self
+}])
+
+.factory('Counsel', ['$q', 'Data', function ($q, Data) {
+  var self = this
+    // params->0:{userId:'doc01',status:1}
+    //        1:{userId:'doc01'}
+    //        2:{userId:'doc01',type:1}
+    //        3:{userId:'doc01',status:1,type:1}
+  self.getCounsels = function (params) {
+    var deferred = $q.defer()
+    Data.Counsel.getCounsels(
+            params,
+            function (data, headers) {
+              deferred.resolve(data)
+            },
+            function (err) {
+              deferred.reject(err)
+            })
+    return deferred.promise
+  }
+    // params->0:{
+    //              counselId:'counselpost02',
+    //              patientId:'p01',
+    //              doctorId:'doc01',
+    //              sickTime:'3天',
+    //              symptom:'腹痛',
+    //              symptomPhotoUrl:'http://photo/symptom1',
+    //              help:'帮助'
+    //          }
+  // self.questionaire = function (params) {
+  //   var deferred = $q.defer()
+  //   Data.Counsel.questionaire(
+  //           params,
+  //           function (data, headers) {
+  //             deferred.resolve(data)
+  //           },
+  //           function (err) {
+  //             deferred.reject(err)
+  //           })
+  //   return deferred.promise
+  // }
+  self.getStatus = function (params) {
+    var deferred = $q.defer()
+    Data.Counsel.getStatus(
+            params,
+            function (data, headers) {
+              deferred.resolve(data)
+            },
+            function (err) {
+              deferred.reject(err)
+            })
+    return deferred.promise
+  }
+  // self.changeCounselStatus = function (params) {
+  //   var deferred = $q.defer()
+
+  //   Data.Counsel.changeCounselStatus(
+
+  //           params,
+  //           function (data, headers) {
+  //             deferred.resolve(data)
+  //           },
+  //           function (err) {
+  //             deferred.reject(err)
+  //           })
+  //   return deferred.promise
+  // }
+  self.changeStatus = function (params) {
+    var deferred = $q.defer()
+    Data.Counsel.changeStatus(
+            params,
+            function (data, headers) {
+              deferred.resolve(data)
+            },
+            function (err) {
+              deferred.reject(err)
+            })
+    return deferred.promise
+  }
+  return self
+}])
+
+.factory('Insurance', ['$q', 'Data', function ($q, Data) {
+  var self = this
+    // //params->0:{
+    //                 doctorId:'doc01',
+    //                 patientId:'p01'
+    //             }
+  self.getInsMsg = function (params) {
+    var deferred = $q.defer()
+    Data.Insurance.getInsMsg(
+            params,
+            function (data, headers) {
+              deferred.resolve(data)
+            },
+            function (err) {
+              deferred.reject(err)
+            })
+    return deferred.promise
+  }
+    // params->0:{
+                    // doctorId:'doc01',
+                    // patientId:'p02',
+                    // insuranceId:'ins01'
+    //          }
+  self.updateInsuranceMsg = function (params) {
+    var deferred = $q.defer()
+    Data.Insurance.updateInsuranceMsg(
+            params,
+            function (data, headers) {
+              deferred.resolve(data)
+            },
+            function (err) {
+              deferred.reject(err)
+            })
+    return deferred.promise
+  }
+  return self
+}])
+
+.factory('Advice', ['$q', 'Data', function ($q, Data) {
+  var self = this
+  self.postAdvice = function (params) {
+    var deferred = $q.defer()
+    Data.Advice.postAdvice(
+            params,
+            function (data, headers) {
+              deferred.resolve(data)
+            },
+            function (err) {
+              deferred.reject(err)
+            })
+    return deferred.promise
+  }
+  return self
+}])
+
+.factory('New', ['$q', 'Data', function ($q, Data) {
   var self = this
   self.getNews = function (params) {
     var deferred = $q.defer()
@@ -1800,9 +2151,23 @@ angular.module('kidney.services', ['ionic', 'ngResource'])
             })
     return deferred.promise
   }
+
   self.insertNews = function (params) {
     var deferred = $q.defer()
     Data.New.insertNews(
+            params,
+            function (data, headers) {
+              deferred.resolve(data)
+            },
+            function (err) {
+              deferred.reject(err)
+            })
+    return deferred.promise
+  }
+
+  self.changeNewsStatus = function (params) {
+    var deferred = $q.defer()
+    Data.New.changeNewsStatus(
             params,
             function (data, headers) {
               deferred.resolve(data)
@@ -1853,7 +2218,6 @@ angular.module('kidney.services', ['ionic', 'ngResource'])
             .then(function (res) {
               var msgs = res.results
               arr.map(function (item) {
-                if (item === null) return item
                 var pos = getIndex(msgs, item[idName])
                 if (pos != -1) {
                   item.lastMsg = addLastMsg(type, userId, msgs[pos])
@@ -1878,10 +2242,11 @@ angular.module('kidney.services', ['ionic', 'ngResource'])
             .then(function (res) {
               var msgs = res.results
               arr.map(function (item) {
-                if (item[keyName] === null) return item
-                var pos = getIndex(msgs, item[keyName][idName])
-                if (pos != -1) {
-                  item.lastMsg = addLastMsg(type, userId, msgs[pos])
+                if (item[keyName] != null) {
+                  var pos = getIndex(msgs, item[keyName][idName])
+                  if (pos != -1) {
+                    item.lastMsg = addLastMsg(type, userId, msgs[pos])
+                  }
                 }
                 return item
               })
@@ -1890,671 +2255,6 @@ angular.module('kidney.services', ['ionic', 'ngResource'])
               resolve(arr)
             })
     })
-  }
-  return self
-}])
-.factory('Account', ['$q', 'Data', 'checknetwork', function ($q, Data, checknetwork) {
-  var self = this
-    // params->0:{userId:'p01'}
-  self.getAccountInfo = function (params) {
-    var deferred = $q.defer()
-    Data.Account.getAccountInfo(
-            params,
-            function (data, headers) {
-              deferred.resolve(data)
-            },
-            function (err) {
-              checknetwork.checknetwork(err)
-              deferred.reject(err)
-            })
-    return deferred.promise
-  }
-  self.modifyCounts = function (params) {
-    var deferred = $q.defer()
-    Data.Account.modifyCounts(
-            params,
-            function (data, headers) {
-              deferred.resolve(data)
-            },
-            function (err) {
-              checknetwork.checknetwork(err)
-              deferred.reject(err)
-            })
-    return deferred.promise
-  }
-  self.getCounts = function (params) {
-    var deferred = $q.defer()
-    Data.Account.getCounts(
-            params,
-            function (data, headers) {
-              deferred.resolve(data)
-            },
-            function (err) {
-              checknetwork.checknetwork(err)
-              deferred.reject(err)
-            })
-    return deferred.promise
-  }
-  return self
-}])
-.factory('VitalSign', ['$q', 'Data', 'checknetwork', function ($q, Data, checknetwork) {
-  var self = this
-    // params->0:{userId:'p01',type:'type1'}
-  self.getVitalSigns = function (params) {
-    var deferred = $q.defer()
-    Data.VitalSign.getVitalSigns(
-            params,
-            function (data, headers) {
-              deferred.resolve(data)
-            },
-            function (err) {
-              checknetwork.checknetwork(err)
-              deferred.reject(err)
-            })
-    return deferred.promise
-  }
-  return self
-}])
-.factory('Comment', ['$q', 'Data', 'checknetwork', function ($q, Data, checknetwork) {
-  var self = this
-    // params->0:{userId:'doc01'}
-  self.getComments = function (params) {
-    var deferred = $q.defer()
-    Data.Comment.getComments(
-            params,
-            function (data, headers) {
-              deferred.resolve(data)
-            },
-            function (err) {
-              checknetwork.checknetwork(err)
-              deferred.reject(err)
-            })
-    return deferred.promise
-  }
-  return self
-}])
-.factory('Patient', ['$q', 'Data', 'checknetwork', function ($q, Data, checknetwork) {
-  var self = this
-    // params->0:{userId:'p01'}
-  self.getPatientDetail = function (params) {
-    var deferred = $q.defer()
-    Data.Patient.getPatientDetail(
-            params,
-            function (data, headers) {
-              deferred.resolve(data)
-            },
-            function (err) {
-              checknetwork.checknetwork(err)
-              deferred.reject(err)
-            })
-    return deferred.promise
-  }
-
-    // params->0:{userId:'p01'}
-  self.getMyDoctors = function (params) {
-    var deferred = $q.defer()
-    Data.Patient.getMyDoctors(
-            params,
-            function (data, headers) {
-              deferred.resolve(data)
-            },
-            function (err) {
-              checknetwork.checknetwork(err)
-              deferred.reject(err)
-            })
-    return deferred.promise
-  }
-
-    // params->0:{workUnit:'浙江省人民医院'}
-    //        1:{workUnit:'浙江省人民医院',name:'医生01'}
-  self.getDoctorLists = function (params) {
-    var deferred = $q.defer()
-    Data.Patient.getDoctorLists(
-            params,
-            function (data, headers) {
-              deferred.resolve(data)
-            },
-            function (err) {
-              checknetwork.checknetwork(err)
-              deferred.reject(err)
-            })
-    return deferred.promise
-  }
-
-    // params->0:{userId:'p01'}
-  self.getCounselRecords = function (params) {
-    var deferred = $q.defer()
-    Data.Patient.getCounselRecords(
-            params,
-            function (data, headers) {
-              deferred.resolve(data)
-            },
-            function (err) {
-              checknetwork.checknetwork(err)
-              deferred.reject(err)
-            })
-    return deferred.promise
-  }
-
-    // params->0:{
-            //     patientId:'ppost01',
-            //     doctorId:'doc01',
-            //     diagname:'慢性肾炎',
-            //     diagtime:'2017-04-06',
-            //     diagprogress:'吃药',
-            //     diagcontent:'blabla啥啥啥的'
-            // }
-  self.insertDiagnosis = function (params) {
-    var deferred = $q.defer()
-    Data.Patient.insertDiagnosis(
-            params,
-            function (data, headers) {
-              deferred.resolve(data)
-            },
-            function (err) {
-              checknetwork.checknetwork(err)
-              deferred.reject(err)
-            })
-    return deferred.promise
-  }
-
-    // params->0:{
-            //     userId:'ppost01',
-            //     name:'患者xx',
-            //     birthday:'1987-03-25',
-            //     gender:2,
-            //     IDNo:123456123456781234,
-            //     height:183,
-            //     weight:70,
-            //     bloodType:2,
-            //     class:'class1',
-            //     class_info:'info_1',
-            //     operationTime:'2017-04-05',
-            //     hypertension:1,
-            //     photoUrl:'http://photo/ppost01.jpg'
-            // }
-  self.newPatientDetail = function (params) {
-    var deferred = $q.defer()
-    Data.Patient.newPatientDetail(
-            params,
-            function (data, headers) {
-              deferred.resolve(data)
-            },
-            function (err) {
-              checknetwork.checknetwork(err)
-              deferred.reject(err)
-            })
-    return deferred.promise
-  }
-
-    // params->0:{
-                // userId:'ppost01',
-                // name:'新名字2',
-                // birthday:1987-03-03,
-                // gender:1,
-                // IDNo:123456123456781234,
-                // height:183,
-                // weight:70,
-                // bloodType:2,
-                // class:'class1',
-                // class_info:'info3',
-                // hypertension:1,
-                // photoUrl:'http://photo/ppost01.jpg'
-            // }
-  self.editPatientDetail = function (params) {
-    var deferred = $q.defer()
-    Data.Patient.editPatientDetail(
-            params,
-            function (data, headers) {
-              deferred.resolve(data)
-            },
-            function (err) {
-              checknetwork.checknetwork(err)
-              deferred.reject(err)
-            })
-    return deferred.promise
-  }
-
-  return self
-}])
-.factory('Doctor', ['$q', 'Data', 'checknetwork', function ($q, Data, checknetwork) {
-  var self = this
-    // params->0:{
-           //   userId:'docpostTest',//unique
-           //   name:'姓名',
-           //   birthday:'1956-05-22',
-           //   gender:1,
-           //   workUnit:'浙江省人民医院',
-           //   department:'肾内科',
-           //   title:'副主任医师',
-           //   major:'慢性肾炎',
-           //   description:'经验丰富',
-           //   photoUrl:'http://photo/docpost3.jpg',
-           //   charge1:150,
-           //   charge2:50
-           // }
-  self.postDocBasic = function (params) {
-    var deferred = $q.defer()
-    Data.Doctor.postDocBasic(
-            params,
-            function (data, headers) {
-              deferred.resolve(data)
-            },
-            function (err) {
-              checknetwork.checknetwork(err)
-              deferred.reject(err)
-            })
-    return deferred.promise
-  }
-
-    // params->0:{
-       //   userId:'doc01'
-       // }
-  self.getPatientList = function (params) {
-    var deferred = $q.defer()
-    Data.Doctor.getPatientList(
-            params,
-            function (data, headers) {
-              deferred.resolve(data)
-            },
-            function (err) {
-              checknetwork.checknetwork(err)
-              deferred.reject(err)
-            })
-    return deferred.promise
-  }
-
-    // params->0:{
-       //   userId:'doc01'
-       // }
-  self.getRecentDoctorList = function (params) {
-    var deferred = $q.defer()
-    Data.Doctor.getRecentDoctorList(
-            params,
-            function (data, headers) {
-              deferred.resolve(data)
-            },
-            function (err) {
-              checknetwork.checknetwork(err)
-              deferred.reject(err)
-            })
-    return deferred.promise
-  }
-
-    // params->0:{
-           //   userId:'doc01'
-           // }
-  self.getDoctorInfo = function (params) {
-    var deferred = $q.defer()
-    Data.Doctor.getDoctorInfo(
-            params,
-            function (data, headers) {
-              deferred.resolve(data)
-            },
-            function (err) {
-              checknetwork.checknetwork(err)
-              deferred.reject(err)
-            })
-    return deferred.promise
-  }
-    // params->0:{
-           //   userId:'doc01'
-           // }
-  self.getMyGroupList = function (params) {
-    var deferred = $q.defer()
-    Data.Doctor.getMyGroupList(
-            params,
-            function (data, headers) {
-              deferred.resolve(data.results)
-            },
-            function (err) {
-              checknetwork.checknetwork(err)
-              deferred.reject(err)
-            })
-    return deferred.promise
-  }
-
-    // params->0:{
-           //   userId:'doc01'
-           // }
-  self.getRecentDoctorList = function (params) {
-    var deferred = $q.defer()
-    Data.Doctor.getRecentDoctorList(
-            params,
-            function (data, headers) {
-              deferred.resolve(data)
-            },
-            function (err) {
-              checknetwork.checknetwork(err)
-              deferred.reject(err)
-            })
-    return deferred.promise
-  }
-
-    // params->0:{
-           //   teamId:'team1',
-           //   status:1
-           // }
-  self.getGroupPatientList = function (params) {
-    var deferred = $q.defer()
-    Data.Doctor.getGroupPatientList(
-            params,
-            function (data, headers) {
-              deferred.resolve(data)
-            },
-            function (err) {
-              checknetwork.checknetwork(err)
-              deferred.reject(err)
-            })
-    return deferred.promise
-  }
-
-  self.editDoctorDetail = function (params) {
-    var deferred = $q.defer()
-    Data.Doctor.editDoctorDetail(
-            params,
-            function (data, headers) {
-              deferred.resolve(data)
-            },
-            function (err) {
-              checknetwork.checknetwork(err)
-              deferred.reject(err)
-            })
-    return deferred.promise
-  }
-
-    // params->0:{
-           //   userId:'doc01',
-           //   day:0,//0-6->周一，周二...周日
-           //   time:0//0->上午 1->下午
-           // }
-  self.insertSchedule = function (params) {
-    var deferred = $q.defer()
-    Data.Doctor.insertSchedule(
-            params,
-            function (data, headers) {
-              deferred.resolve(data)
-            },
-            function (err) {
-              checknetwork.checknetwork(err)
-              deferred.reject(err)
-            })
-    return deferred.promise
-  }
-
-    // params->0:{
-           //   userId:'doc01'
-           // }
-  self.getSchedules = function (params) {
-    var deferred = $q.defer()
-    Data.Doctor.getSchedules(
-            params,
-            function (data, headers) {
-              deferred.resolve(data)
-            },
-            function (err) {
-              checknetwork.checknetwork(err)
-              deferred.reject(err)
-            })
-    return deferred.promise
-  }
-
-    // params->0:{
-           //   userId:'doc01',
-           //   day:0,//0-6->周一，周二...周日
-           //   time:0//0->上午 1->下午
-           // }
-  self.deleteSchedule = function (params) {
-    var deferred = $q.defer()
-    Data.Doctor.deleteSchedule(
-            params,
-            function (data, headers) {
-              deferred.resolve(data)
-            },
-            function (err) {
-              checknetwork.checknetwork(err)
-              deferred.reject(err)
-            })
-    return deferred.promise
-  }
-
-    // params->0:{
-    //   userId:'doc01'
-    // }
-  self.getSuspendTime = function (params) {
-    var deferred = $q.defer()
-    Data.Doctor.getSuspendTime(
-            params,
-            function (data, headers) {
-              deferred.resolve(data)
-            },
-            function (err) {
-              checknetwork.checknetwork(err)
-              deferred.reject(err)
-            })
-    return deferred.promise
-  }
-
-    // params->0:{
-           //   userId:'doc01',
-           //   start:new Date(),
-           //   end:new Date(),
-           // }
-  self.insertSuspendTime = function (params) {
-    var deferred = $q.defer()
-    Data.Doctor.insertSuspendTime(
-            params,
-            function (data, headers) {
-              deferred.resolve(data)
-            },
-            function (err) {
-              checknetwork.checknetwork(err)
-              deferred.reject(err)
-            })
-    return deferred.promise
-  }
-
-    // params->0:{
-           //   userId:'doc01',
-           //   start:new Date(),
-           //   end:new Date(),
-           // }
-  self.deleteSuspendTime = function (params) {
-    var deferred = $q.defer()
-    Data.Doctor.deleteSuspendTime(
-            params,
-            function (data, headers) {
-              deferred.resolve(data)
-            },
-            function (err) {
-              checknetwork.checknetwork(err)
-              deferred.reject(err)
-            })
-    return deferred.promise
-  }
-
-    // params->0:{
-           //   userId:'doc01',
-           // }
-  self.getPatientByDate = function (params) {
-    var deferred = $q.defer()
-    Data.Doctor.getPatientByDate(
-            params,
-            function (data, headers) {
-              deferred.resolve(data)
-            },
-            function (err) {
-              checknetwork.checknetwork(err)
-              deferred.reject(err)
-            })
-    return deferred.promise
-  }
-
-    // params->empty
-  self.getDocNum = function () {
-    var deferred = $q.defer()
-    Data.Doctor.getDocNum(
-            function (data, headers) {
-              deferred.resolve(data)
-            },
-            function (err) {
-              checknetwork.checknetwork(err)
-              deferred.reject(err)
-            })
-    return deferred.promise
-  }
-
-    // params->userId:'doc01'
-  self.getAliPayAccount = function (params) {
-    var deferred = $q.defer()
-    Data.Doctor.getAliPayAccount(
-            params,
-            function (data, headers) {
-              deferred.resolve(data)
-            },
-            function (err) {
-              checknetwork.checknetwork(err)
-              deferred.reject(err)
-            })
-    return deferred.promise
-  }
-    // params->{userId:'doc01',aliPayAccount:'abc@def.com'}
-  self.editAliPayAccount = function (params) {
-    var deferred = $q.defer()
-    Data.Doctor.editAliPayAccount(
-            params,
-            function (data, headers) {
-              deferred.resolve(data)
-            },
-            function (err) {
-              checknetwork.checknetwork(err)
-              deferred.reject(err)
-            }
-        )
-    return deferred.promise
-  }
-
-  return self
-}])
-.factory('Counsel', ['$q', 'Data', 'checknetwork', function ($q, Data, checknetwork) {
-  var self = this
-    // params->0:{userId:'doc01',status:1}
-    //        1:{userId:'doc01'}
-    //        2:{userId:'doc01',type:1}
-    //        3:{userId:'doc01',status:1,type:1}
-  self.getCounsels = function (params) {
-    var deferred = $q.defer()
-    Data.Counsel.getCounsel(
-            params,
-            function (data, headers) {
-              deferred.resolve(data)
-            },
-            function (err) {
-              checknetwork.checknetwork(err)
-              deferred.reject(err)
-            })
-    return deferred.promise
-  }
-    // params->0:{
-    //              counselId:'counselpost02',
-    //              patientId:'p01',
-    //              doctorId:'doc01',
-    //              sickTime:'3天',
-    //              symptom:'腹痛',
-    //              symptomPhotoUrl:'http://photo/symptom1',
-    //              help:'帮助'
-    //          }
-  self.questionaire = function (params) {
-    var deferred = $q.defer()
-    Data.Counsel.questionaire(
-            params,
-            function (data, headers) {
-              deferred.resolve(data)
-            },
-            function (err) {
-              checknetwork.checknetwork(err)
-              deferred.reject(err)
-            })
-    return deferred.promise
-  }
-  self.changeCounselStatus = function (params) {
-    var deferred = $q.defer()
-    Data.Counsel.changeCounselStatus(
-            params,
-            function (data, headers) {
-              deferred.resolve(data)
-            },
-            function (err) {
-              checknetwork.checknetwork(err)
-              deferred.reject(err)
-            })
-    return deferred.promise
-  }
-  self.getStatus = function (params) {
-    var deferred = $q.defer()
-    Data.Counsel.getStatus(
-            params,
-            function (data, headers) {
-              deferred.resolve(data)
-            },
-            function (err) {
-              checknetwork.checknetwork(err)
-              deferred.reject(err)
-            })
-    return deferred.promise
-  }
-  self.changeStatus = function (params) {
-    var deferred = $q.defer()
-    Data.Counsel.changeStatus(
-            params,
-            function (data, headers) {
-              deferred.resolve(data)
-            },
-            function (err) {
-              checknetwork.checknetwork(err)
-              deferred.reject(err)
-            })
-    return deferred.promise
-  }
-  return self
-}])
-
-.factory('Insurance', ['$q', 'Data', 'checknetwork', function ($q, Data, checknetwork) {
-  var self = this
-    // //params->0:{
-    //                 doctorId:'doc01',
-    //                 patientId:'p01'
-    //             }
-  self.getInsMsg = function (params) {
-    var deferred = $q.defer()
-    Data.Insurance.getInsMsg(
-            params,
-            function (data, headers) {
-              deferred.resolve(data)
-            },
-            function (err) {
-              checknetwork.checknetwork(err)
-              deferred.reject(err)
-            })
-    return deferred.promise
-  }
-    // params->0:{
-                    // doctorId:'doc01',
-                    // patientId:'p02',
-                    // insuranceId:'ins01'
-    //          }
-  self.updateInsuranceMsg = function (params) {
-    var deferred = $q.defer()
-    Data.Insurance.updateInsuranceMsg(
-            params,
-            function (data, headers) {
-              deferred.resolve(data)
-            },
-            function (err) {
-              checknetwork.checknetwork(err)
-              deferred.reject(err)
-            })
-    return deferred.promise
   }
   return self
 }])
@@ -2585,6 +2285,86 @@ angular.module('kidney.services', ['ionic', 'ngResource'])
     }
   }
 }])
+.factory('Mywechat', ['$q', 'Data', 'checknetwork', function ($q, Data, checknetwork) {
+  var self = this
+
+  self.settingConfig = function (params) {
+    params.role = 'doctor'
+    var deferred = $q.defer()
+    Data.Mywechat.settingConfig(
+            params,
+            function (data, headers) {
+              deferred.resolve(data)
+            },
+            function (err) {
+              checknetwork.checknetwork(err)
+              deferred.reject(err)
+            })
+    return deferred.promise
+  }
+
+  self.getUserInfo = function (params) {
+    params.role = 'doctor'
+    var deferred = $q.defer()
+    Data.Mywechat.getUserInfo(
+            params,
+            function (data, headers) {
+              deferred.resolve(data)
+            },
+            function (err) {
+              checknetwork.checknetwork(err)
+              deferred.reject(err)
+            })
+    return deferred.promise
+  }
+
+  self.download = function (params) {
+    params.role = 'doctor'
+    var deferred = $q.defer()
+    Data.Mywechat.download(
+            params,
+            function (data, headers) {
+              deferred.resolve(data)
+            },
+            function (err) {
+              checknetwork.checknetwork(err)
+              deferred.reject(err)
+            })
+    return deferred.promise
+  }
+
+  self.messageTemplate = function (params) {
+    var deferred = $q.defer()
+    Data.Mywechat.messageTemplate(
+            params,
+            function (data, headers) {
+              deferred.resolve(data)
+            },
+            function (err) {
+              checknetwork.checknetwork(err)
+              deferred.reject(err)
+            })
+    return deferred.promise
+  }
+
+  self.createTDCticket = function (params) {
+    params.role = 'patient'
+    var deferred = $q.defer()
+    Data.Mywechat.createTDCticket(
+            params,
+            function (data, headers) {
+              deferred.resolve(data)
+            },
+            function (err) {
+              checknetwork.checknetwork(err)
+              deferred.reject(err)
+            })
+    return deferred.promise
+  }
+
+  return self
+}])
+
 .factory('arrTool', function () {
   return {
     indexOf: function (arr, key, val, binary) {
@@ -2603,149 +2383,7 @@ angular.module('kidney.services', ['ionic', 'ngResource'])
     }
   }
 })
-
-.factory('wechat', ['$q', 'Data', 'checknetwork', function ($q, Data, checknetwork) {
-  var self = this
-    // params->{
-            //  url:'patient_class'
-           // }
-  self.settingConfig = function (params) {
-    params.role = 'doctor'
-    var deferred = $q.defer()
-    Data.wechat.settingConfig(
-            params,
-            function (data, headers) {
-              deferred.resolve(data)
-            },
-            function (err) {
-              checknetwork.checknetwork(err)
-              deferred.reject(err)
-            })
-    return deferred.promise
-  }
-    // params->{
-            //  code:'3'
-            // }
-  self.getUserInfo = function (params) {
-    params.role = 'doctor'
-    var deferred = $q.defer()
-    Data.wechat.getUserInfo(
-            params,
-            function (data, headers) {
-              deferred.resolve(data)
-            },
-            function (err) {
-              checknetwork.checknetwork(err)
-              deferred.reject(err)
-            })
-    return deferred.promise
-  }
-    // params->{
-            //  serverId:
-            //  name:
-            // }
-  self.download = function (params) {
-    params.role = 'doctor'
-    var deferred = $q.defer()
-    Data.wechat.download(
-            params,
-            function (data, headers) {
-              deferred.resolve(data)
-            },
-            function (err) {
-              checknetwork.checknetwork(err)
-              deferred.reject(err)
-            })
-    return deferred.promise
-  }
-
-  self.messageTemplate = function (params) {
-    var deferred = $q.defer()
-    Data.wechat.messageTemplate(
-            params,
-            function (data, headers) {
-              deferred.resolve(data)
-            },
-            function (err) {
-              checknetwork.checknetwork(err)
-              deferred.reject(err)
-            })
-    return deferred.promise
-  }
-
-  self.createTDCticket = function (params) {
-    params.role = 'patient'
-    var deferred = $q.defer()
-    Data.wechat.createTDCticket(
-            params,
-            function (data, headers) {
-              deferred.resolve(data)
-            },
-            function (err) {
-              checknetwork.checknetwork(err)
-              deferred.reject(err)
-            })
-    return deferred.promise
-  }
-
-  return self
-}])
-.factory('jm', ['$q', 'Data', 'checknetwork', function ($q, Data, checknetwork) {
-  var self = this
-    // params->{
-            //  url:'patient_class'
-           // }
-  self.users = function (params) {
-    var deferred = $q.defer()
-    Data.jm.users(
-            params,
-            function (data, headers) {
-              deferred.resolve(data)
-            },
-            function (err) {
-              checknetwork.checknetwork(err)
-              deferred.reject(err)
-            })
-    return deferred.promise
-  }
-    // params->{
-            //  code:'3'
-            // }
-  self.groups = function (params) {
-    var deferred = $q.defer()
-    Data.jm.groups(
-            params,
-            function (data, headers) {
-              deferred.resolve(data)
-            },
-            function (err) {
-              checknetwork.checknetwork(err)
-              deferred.reject(err)
-            })
-    return deferred.promise
-  }
-    // params->{
-            //  serverId:
-            //  name:
-            // }
-  self.groupsMembers = function (params) {
-    var deferred = $q.defer()
-    Data.jm.groupsMembers(
-            params,
-            function (data, headers) {
-              deferred.resolve(data)
-            },
-            function (err) {
-              checknetwork.checknetwork(err)
-              deferred.reject(err)
-            })
-    return deferred.promise
-  }
-
-  return self
-}])
-
-.factory('Expense', ['$q', 'Data', 'checknetwork', function ($q, Data, checknetwork) {
+.factory('Expense', ['$q', 'Data', function ($q, Data) {
   var self = this
 
     // params->0:{
@@ -2761,7 +2399,6 @@ angular.module('kidney.services', ['ionic', 'ngResource'])
               deferred.resolve(data)
             },
             function (err) {
-              checknetwork.checknetwork(err)
               deferred.reject(err)
             })
     return deferred.promise
@@ -2770,17 +2407,653 @@ angular.module('kidney.services', ['ionic', 'ngResource'])
   return self
 }])
 
-.factory('Advice', ['$q', 'Data', 'checknetwork', function ($q, Data, checknetwork) {
+.factory('socket', ['$rootScope', 'socketFactory', 'CONFIG', function ($rootScope, socketFactory, CONFIG) {
+  var myIoSocket = io.connect(CONFIG.socketServer + 'chat')
+
+    // return io.connect(CONFIG.socketServer+'chat');
+    // return {
+    //     on: function(eventName, callback) {
+    //         socket.on(eventName, function() {
+    //             var args = arguments;
+    //             // $rootScope.$apply(function() {
+    //                 callback.apply(socket, args);
+    //             // });
+    //         });
+    //     },
+    //     emit: function(eventName, data, callback) {
+    //         socket.emit(eventName, data, function() {
+    //             var args = arguments;
+    //             // $rootScope.$apply(function() {
+    //                 if (callback) {
+    //                     callback.apply(socket, args);
+    //                 }
+    //             // });
+    //         })
+    //     }
+    // };
+
+  var mySocket = socketFactory({
+    ioSocket: myIoSocket,
+    prefix: 'im:'
+  })
+  mySocket.forward(['getMsg', 'messageRes', 'err', 'disconnect'])
+  return mySocket
+}])
+.factory('notify', ['$cordovaLocalNotification', '$cordovaFileTransfer', 'CONFIG', 'arrTool', function ($cordovaLocalNotification, $cordovaFileTransfer, CONFIG, arrTool) {
+  var COUNT_REG = /^\[([1-9]+[0-9]*)\]/
+  function nextCount (text) {
+    var matchs = text.match(COUNT_REG)
+    return matchs === null ? 2 : Number(matchs[1]) + 1
+  }
+  function noteGen (msg) {
+    var note = msg.fromName + ':',
+      type = msg.contentType
+    if (type == 'text') {
+      note += msg.content.text
+    } else if (type == 'image') {
+      note += '[图片]'
+    } else if (type == 'voice') {
+      note += '[语音]'
+    } else {
+      var subT = msg.content.type
+      if (subT == 'card') {
+        if (msg.content.counsel.type == '1') tag1 = '[新咨询]'
+        if (msg.content.counsel.type == '2' || msg.content.counsel.type == '3') tag1 = '[新问诊]'
+        if (msg.content.counsel.type == '6' || msg.content.counsel.type == '7') tag1 = '[新加急咨询]'
+        if (msg.newsType == '11') note += tag1
+        else if (msg.newsType == '12') note += '[病历转发]'
+        else note += '[团队病历]'
+      } else if (subT == 'contact') {
+        note += '[联系人名片]'
+      } else if (subT == 'endl') {
+        if (msg.content.counseltype == 1) tag2 = '[咨询结束]'
+        if (msg.content.counseltype == 2 || msg.content.counseltype == 3) tag2 = '[问诊结束]'
+        if (msg.content.counseltype == 6 || msg.content.counseltype == 7) tag2 = '[加急咨询结束]'
+        note += tag2
+      } else {
+        note += '[新消息]'
+      }
+    }
+    return note
+  }
+  function schedulNote (msg, note) {
+    if (note) {
+      note.text = '[' + nextCount(note.text) + ']' + noteGen(msg)
+            // opt.text = '[' + nextCount(note.text) + ']' + opt.text;
+    } else {
+      var noteid = msg.targetType == 'single' ? msg.fromID : msg.targetID
+      noteid = Number(noteid.slice(1))
+      var note = {
+        id: noteid,
+        title: msg.targetType == 'single' ? msg.fromName : msg.targetName,
+        text: noteGen(msg),
+        data: msg,
+        led: '1199dd',
+        icon: '',
+        smallIcon: 'texticon',
+        color: '1199dd'
+      }
+    }
+    return $cordovaLocalNotification.add(note)
+  }
+  return {
+    add: function (msg) {
+      if (msg.contentType == 'custom' && (msg.content.type == 'counsel-upgrade' || msg.content.type == 'count-notice')) return
+
+      var matchId = msg.targetType == 'single' ? msg.fromID : msg.targetID
+      matchId = Number(matchId.slice(1))
+      return $cordovaLocalNotification.getAll()
+                .then(function (notes) {
+                  var pos = arrTool.indexOf(notes, 'id', matchId)
+                  if (pos == -1) return null
+                  return notes[pos]
+                }).then(function (note) {
+                  if (note == null) {
+                    return schedulNote(msg)
+                  } else {
+                    return schedulNote(msg, note)
+                  }
+                })
+    },
+    remove: function (id) {
+      var matchId = Number(id.slice(1))
+      return $cordovaLocalNotification.cancel(matchId)
+    }
+  }
+}])
+.factory('mySocket', ['socket', '$interval', function (socket, $interval) {
+  var timer = null
+  var currentUser = {
+    id: '',
+    name: ''
+  }
+  function newUserOnce (userId, name) {
+    if (userId == '') return
+    var n = name || ''
+    socket.emit('newUser', { user_name: n, user_id: userId, client: 'doctor'})
+  }
+  return {
+    newUser: function (userId, name) {
+      socket.connect()
+      currentUser.id = userId
+      currentUser.name = name
+      timer = $interval((function newuser () {
+        newUserOnce(userId, name)
+                // socket.emit('newUser',{ user_name:n , user_id: userId, client:'app'});
+        return newuser
+      }()), 600000)
+    },
+    newUserOnce: newUserOnce,
+    newUserForTempUse: function (userId, name) {
+      $interval.cancel(timer)
+      newUserOnce(userId, name)
+      return function () {
+        socket.emit('disconnect')
+        setTimeout(function () {
+          newUser(currentUser.id, currentUser.name)
+        }, 1000)
+                // socket.emit('newUser',{ user_name:currentUser.name , user_id: currentUser.id, client:'app'});
+      }
+    },
+    cancelAll: function () {
+      if (timer != null) {
+        $interval.cancel(timer)
+        timers = null
+      }
+      currentUser.id = ''
+    }
+  }
+}])
+.factory('session', ['Storage', 'socket', 'mySocket', function (Storage, socket, mySocket) {
+  return {
+    logOut: function () {
+                // Storage.set('IsSignIn','NO');
+                // $state.logStatus="用户已注销";
+                // 清除登陆信息
+      Storage.rm('password')
+      Storage.rm('doctorunionid')
+      Storage.rm('IsSignIn')
+      Storage.rm('PASSWORD')
+      Storage.rm('userid')
+      mySocket.cancelAll()
+      socket.emit('disconnect')
+      socket.disconnect()
+                // resolve(true);
+    }
+  }
+}])
+
+.factory('version', ['$q', 'Data', '$cordovaAppVersion', '$ionicPopup', function ($q, Data, $cordovaAppVersion, $ionicPopup) {
   var self = this
-  self.postAdvice = function (params) {
+
+  var getVersion = function (params) {
     var deferred = $q.defer()
-    Data.Advice.postAdvice(
+    Data.version.getVersion(
             params,
             function (data, headers) {
               deferred.resolve(data)
             },
             function (err) {
-              checknetwork.checknetwork(err)
+              deferred.reject(err)
+            })
+    return deferred.promise
+  }
+
+  self.checkUpdate = function (scope) {
+    $cordovaAppVersion.getAppVersion().then(function (version) {
+          // alert(version);
+      var json = {
+        title: '',
+        template: ''
+      }
+      var VersionParams = {
+        versionName: version,
+        versionType: 'appdoctor'
+      }
+          // alert(JSON.stringify(VersionParams));
+
+      getVersion(VersionParams).then(function (data) {
+         // alert(JSON.stringify(data.results));
+        if (angular.isArray(data.results.msg)) {
+          json.title = '肾事联盟有更新啦'
+          for (x in data.results.msg) {
+            json.template += "<p style = 'padding-left:15px;'>" + 'V' + data.results.msg[x].versionName + ' 更新: ' + data.results.msg[x].content + '</p>'
+          }
+          return $ionicPopup.alert({
+            title: json.title,
+            template: json.template,
+            scope: scope,
+            buttons: [
+              {
+                text: '我知道了',
+                type: 'button button-block bg-6a fc-ff',
+                onTap: function () {
+                  return 'ok'
+                }
+              }
+            ]
+          })
+        }
+      }, function (err) {
+            // alert("err");
+      })
+    })
+  }
+
+  return self
+}])
+
+.factory('labtestImport', ['$q', 'Data', function ($q, Data) {
+  var self = this
+  self.getLabtestImport = function (params) {
+    var deferred = $q.defer()
+    Data.labtestImport.getLabtestImport(
+            params,
+            function (data, headers) {
+              deferred.resolve(data)
+            },
+            function (err) {
+              deferred.reject(err)
+            })
+    return deferred.promise
+  }
+  return self
+}])
+
+.factory('services', ['$q', 'Data', function ($q, Data) {
+  var self = this
+  self.setSchedules = function (params) {
+    var deferred = $q.defer()
+    Data.services.setSchedules(
+           params,
+            function (data, headers) {
+              deferred.resolve(data)
+            },
+            function (err) {
+              deferred.reject(err)
+            })
+    return deferred.promise
+  }
+
+  self.setStatus = function (params) {
+    var deferred = $q.defer()
+    Data.services.setStatus(
+            params,
+            function (data, headers) {
+              deferred.resolve(data)
+            },
+            function (err) {
+              deferred.reject(err)
+            })
+    return deferred.promise
+  }
+
+  self.setCharge = function (params) {
+    var deferred = $q.defer()
+    Data.services.setCharge(
+            params,
+            function (data, headers) {
+              deferred.resolve(data)
+            },
+            function (err) {
+              deferred.reject(err)
+            })
+    return deferred.promise
+  }
+
+  self.getStatus = function (params) {
+    var deferred = $q.defer()
+    Data.services.getStatus(
+            params,
+            function (data, headers) {
+              deferred.resolve(data)
+            },
+            function (err) {
+              deferred.reject(err)
+            })
+    return deferred.promise
+  }
+
+  self.getSchedules = function (params) {
+    var deferred = $q.defer()
+    Data.services.getSchedules(
+            params,
+            function (data, headers) {
+              deferred.resolve(data)
+            },
+            function (err) {
+              deferred.reject(err)
+            })
+    return deferred.promise
+  }
+
+  self.deleteSchedules = function (params) {
+    var deferred = $q.defer()
+    Data.services.deleteSchedules(
+            params,
+            function (data, headers) {
+              deferred.resolve(data)
+            },
+            function (err) {
+              deferred.reject(err)
+            })
+    return deferred.promise
+  }
+
+  self.relayTarget = function (params) {
+    var deferred = $q.defer()
+    Data.services.relayTarget(
+            params,
+            function (data, headers) {
+              deferred.resolve(data)
+            },
+            function (err) {
+              deferred.reject(err)
+            })
+    return deferred.promise
+  }
+
+  self.deleteSuspend = function (params) {
+    var deferred = $q.defer()
+    Data.services.deleteSuspend(
+            params,
+            function (data, headers) {
+              deferred.resolve(data)
+            },
+            function (err) {
+              deferred.reject(err)
+            })
+    return deferred.promise
+  }
+
+  self.setSuspend = function (params) {
+    var deferred = $q.defer()
+    Data.services.setSuspend(
+            params,
+            function (data, headers) {
+              deferred.resolve(data)
+            },
+            function (err) {
+              deferred.reject(err)
+            })
+    return deferred.promise
+  }
+
+  self.myPDpatients = function (params) {
+    var deferred = $q.defer()
+    Data.services.myPDpatients(
+            params,
+            function (data, headers) {
+              deferred.resolve(data)
+            },
+            function (err) {
+              deferred.reject(err)
+            })
+    return deferred.promise
+  }
+
+  self.PDConfirmation = function (params) {
+    var deferred = $q.defer()
+    Data.services.PDConfirmation(
+            params,
+            function (data, headers) {
+              deferred.resolve(data)
+            },
+            function (err) {
+              deferred.reject(err)
+            })
+    return deferred.promise
+  }
+  return self
+}])
+
+.factory('Doctor2', ['$q', 'Data', function ($q, Data) {
+  var self = this
+  self.getReviewList = function (params) {
+    var deferred = $q.defer()
+    Data.Doctor2.getReviewList(
+            params,
+            function (data, headers) {
+              deferred.resolve(data)
+            },
+            function (err) {
+              deferred.reject(err)
+            })
+    return deferred.promise
+  }
+
+  self.saveReviewInfo = function (params) {
+    var deferred = $q.defer()
+    Data.Doctor2.saveReviewInfo(
+            params,
+            function (data, headers) {
+              deferred.resolve(data)
+            },
+            function (err) {
+              deferred.reject(err)
+            })
+    return deferred.promise
+  }
+
+  self.getPatientList = function (params) {
+    var deferred = $q.defer()
+    Data.Doctor2.getPatientList(
+            params,
+            function (data, headers) {
+              deferred.resolve(data)
+            },
+            function (err) {
+              deferred.reject(err)
+            })
+    return deferred.promise
+  }
+
+  self.sendgroupPatient = function (params) {
+    var deferred = $q.defer()
+    Data.Doctor2.sendgroupPatient(
+            params,
+            function (data, headers) {
+              deferred.resolve(data)
+            },
+            function (err) {
+              deferred.reject(err)
+            })
+    return deferred.promise
+  }
+
+  self.getPatientByDate = function (params) {
+    var deferred = $q.defer()
+    Data.Doctor2.getPatientByDate(
+            params,
+            function (data, headers) {
+              deferred.resolve(data)
+            },
+            function (err) {
+              deferred.reject(err)
+            })
+    return deferred.promise
+  }
+  return self
+}])
+
+.factory('getPatientData', ['$q', 'Data', function ($q, Data) {
+  var self = this
+  self.ReportData = function (params) {
+    var deferred = $q.defer()
+    Data.getPatientData.ReportData(
+            params,
+            function (data, headers) {
+              deferred.resolve(data)
+            },
+            function (err) {
+              deferred.reject(err)
+            })
+    return deferred.promise
+  }
+  self.SaveReport = function (params) {
+    var deferred = $q.defer()
+    Data.getPatientData.SaveReport(
+      params,
+            function (data, headers) {
+              deferred.resolve(data)
+            },
+            function (err) {
+              deferred.reject(err)
+            })
+    return deferred.promise
+  }
+  return self
+}])
+.factory('Patient2', ['$q', 'Data', function ($q, Data) {
+  var self = this
+  self.getPatientDetail = function (params) {
+    var deferred = $q.defer()
+    Data.Patient2.getPatientDetail(
+            params,
+            function (data, headers) {
+              deferred.resolve(data)
+            },
+            function (err) {
+              deferred.reject(err)
+            })
+    return deferred.promise
+  }
+  return self
+}])
+
+.factory('Forum', ['$q', 'Data', function ($q, Data) {
+  var self = this
+  self.allposts = function (params) {
+    var deferred = $q.defer()
+    Data.Forum.allposts(
+            params,
+            function (data, headers) {
+              deferred.resolve(data)
+            },
+            function (err) {
+              deferred.reject(err)
+            }
+        )
+    return deferred.promise
+  }
+  self.myposts = function (params) {
+    var deferred = $q.defer()
+    Data.Forum.myposts(
+            params,
+            function (data, headers) {
+              deferred.resolve(data)
+            },
+            function (err) {
+              deferred.reject(err)
+            }
+        )
+    return deferred.promise
+  }
+  self.mycollection = function (params) {
+    var deferred = $q.defer()
+    Data.Forum.mycollection(
+            params,
+            function (data, headers) {
+              deferred.resolve(data)
+            },
+            function (err) {
+              deferred.reject(err)
+            }
+        )
+    return deferred.promise
+  }
+  self.newpost = function (params) {
+    var deferred = $q.defer()
+    Data.Forum.newpost(
+            params,
+            function (data, headers) {
+              deferred.resolve(data)
+            },
+            function (err) {
+              deferred.reject(err)
+            })
+    return deferred.promise
+  }
+  self.favorite = function (params) {
+    var deferred = $q.defer()
+    Data.Forum.favorite(
+            params,
+            function (data, headers) {
+              deferred.resolve(data)
+            },
+            function (err) {
+              deferred.reject(err)
+            })
+    return deferred.promise
+  }
+  self.deletefavorite = function (params) {
+    var deferred = $q.defer()
+    Data.Forum.deletefavorite(
+            params,
+            function (data, headers) {
+              deferred.resolve(data)
+            },
+            function (err) {
+              deferred.reject(err)
+            })
+    return deferred.promise
+  }
+  self.deletepost = function (params) {
+    var deferred = $q.defer()
+    Data.Forum.deletepost(
+            params,
+            function (data, headers) {
+              deferred.resolve(data)
+            },
+            function (err) {
+              deferred.reject(err)
+            })
+    return deferred.promise
+  }
+  self.postcontent = function (params) {
+    var deferred = $q.defer()
+    Data.Forum.postcontent(
+            params,
+            function (data, headers) {
+              deferred.resolve(data)
+            },
+            function (err) {
+              deferred.reject(err)
+            })
+    return deferred.promise
+  }
+  self.deletecomment = function (params) {
+    var deferred = $q.defer()
+    Data.Forum.deletecomment(
+            params,
+            function (data, headers) {
+              deferred.resolve(data)
+            },
+            function (err) {
+              deferred.reject(err)
+            })
+    return deferred.promise
+  }
+  self.comment = function (params) {
+    var deferred = $q.defer()
+    Data.Forum.comment(
+            params,
+            function (data, headers) {
+              deferred.resolve(data)
+            },
+            function (err) {
+              deferred.reject(err)
+            })
+    return deferred.promise
+  }
+  self.reply = function (params) {
+    var deferred = $q.defer()
+    Data.Forum.reply(
+            params,
+            function (data, headers) {
+              deferred.resolve(data)
+            },
+            function (err) {
               deferred.reject(err)
             })
     return deferred.promise
@@ -2838,42 +3111,5 @@ angular.module('kidney.services', ['ionic', 'ngResource'])
       }
     }
 
-  }
-}])
-
-.factory('$exceptionHandler', ['$injector', 'Storage', function ($injector, Storage) {
-  return function myExceptionHandler (exception, cause) {
-    console.log(exception)
-    console.log(cause)
-    // console.log($log)
-    var $http = $injector.get('$http')
-    $http({
-      method: 'POST',
-      url: 'http://121.196.221.44:4060/api/v1/log ',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      data: {
-        'userId': Storage.get('UID'),
-        'role': 'doctor',
-        'userProxy': window.navigator.userAgent,
-        'webState': {
-          'onLine': navigator.onLine,
-          'connection': navigator.connection
-        },
-        'errStack': {
-          'exception': exception,
-          'cause': cause
-        }
-      }
-    }).then(function successCallback (response) {
-      // console.log(response)
-    // this callback will be called asynchronously
-    // when the response is available
-    }, function errorCallback (response) {
-      // console.log(response)
-    // called asynchronously if an error occurs
-    // or server returns response with an error status.
-    })
   }
 }])
