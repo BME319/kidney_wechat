@@ -9,24 +9,47 @@ angular.module('kidney', [
   'tdy.controllers',
   'xjz.controllers',
   'zy.controllers',
+  'fyl.controllers',
   'kidney.services',
   'kidney.filters',
   'kidney.directives',
   'monospaced.qrcode',
   'ionic-datepicker',
   'kidney.icon_filter',
+  'btford.socket-io',
   'angular-jwt'
 ])
 
-.run(['$ionicPlatform', '$state', 'Storage', 'JM', '$ionicHistory', '$rootScope', 'CONFIG', 'Communication', '$location', 'wechat', '$window', 'User', 'Doctor', 'jmapi', '$ionicPopup', '$q', function ($ionicPlatform, $state, Storage, JM, $ionicHistory, $rootScope, CONFIG, Communication, $location, wechat, $window, User, Doctor, jmapi, $ionicPopup, $q) {
+.run(['version', '$ionicPlatform', '$state', 'Storage', '$rootScope', 'CONFIG', 'Communication', 'notify', '$interval', 'socket', 'mySocket', '$ionicPopup', 'session', '$location', '$ionicHistory', 'Mywechat', 'User', 'Doctor', 'jmapi', '$ionicPopup', '$q', function (version, $ionicPlatform, $state, Storage, $rootScope, CONFIG, Communication, notify, $interval, socket, mySocket, $ionicPopup, session, $location, $ionicHistory, Mywechat, User, Doctor, jmapi, $ionicPopup, $q) {
+  // 虚拟返回键显示退出提示框
+  $ionicPlatform.registerBackButtonAction(function (e) {
+    e.preventDefault()
+
+    function showConfirm () {
+      var confirmPopup = $ionicPopup.confirm({
+        title: '<strong>退出应用?</strong>',
+        template: '你确定要退出应用吗?',
+        okText: '退出',
+        cancelText: '取消'
+      })
+
+      confirmPopup.then(function (res) {
+        if (res) {
+          ionic.Platform.exitApp()
+        } else {
+          // Don't close
+        }
+      })
+    }
+    showConfirm()
+    return false
+  }, 101)
+
   $ionicPlatform.ready(function () {
-    socket = io.connect(CONFIG.socketUrl)
-    Storage.rm('chatSender')
-    $ionicHistory.clearHistory()
-    $ionicHistory.nextViewOptions({
-      disableBack: true,
-      disableAnimate: true
-    })
+    // version.checkUpdate($rootScope)// 在app.js的ready里加
+    // 记录message当前会话
+    // $rootScope.isIOS = $ionicPlatform.is('ios')
+
     var temp = $location.absUrl().split('=')
     var code = ''
     var state = ''
@@ -43,10 +66,10 @@ angular.module('kidney', [
         Storage.set('code', code)
       }
     }
-
-    var wechatData = ''
+  
+  var wechatData = ''
     if (code != '' && code != undefined) {
-      wechat.getUserInfo({code: code}).then(function (data) {
+      Mywechat.getUserInfo({code: code}).then(function (data) {
                 // alert(1)
         wechatData = data.results
                 // console.log(wechatData)
@@ -56,29 +79,29 @@ angular.module('kidney', [
         Storage.set('messageopenid', wechatData.openid)
         Storage.set('wechathead', wechatData.headimgurl)
         if (wechatData.unionid && wechatData.openid) {
-                    // User.getUserIDbyOpenId({openId:wechatData.openid}).then(function(data)
-                    // {
-                    //     if (angular.isDefined(data.phoneNo) == true)
-                    //     {
-                    //         var tempresult = []
-                    //         var temperr = []
-                    //         $q.all([
-                    //         User.setOpenId({phoneNo:data.phoneNo,openId:Storage.get('openid')}).then(function(res){
-                    //             console.log("替换openid");
-                    //         },function(err){
-                    //             temperr.push(err)
-                    //         }),
-                    //         User.setMessageOpenId({type:1,userId:data.UserId,openId:wechatData.openid}).then(function(res){
-                    //             console.log("setopenid");
-                    //         },function(err){
-                    //             temperr.push(err)
-                    //         })
-                    //         ]).then(function(){
-                    //             $state.go('signin')
-                    //         })
-                    //     }
-                    //     else
-                    //     {
+            // User.getUserIDbyOpenId({openId:wechatData.openid}).then(function(data)
+            // {
+            //     if (angular.isDefined(data.phoneNo) == true)
+            //     {
+            //         var tempresult = []
+            //         var temperr = []
+            //         $q.all([
+            //         User.setOpenId({phoneNo:data.phoneNo,openId:Storage.get('openid')}).then(function(res){
+            //             console.log("替换openid");
+            //         },function(err){
+            //             temperr.push(err)
+            //         }),
+            //         User.setMessageOpenId({type:1,userId:data.UserId,openId:wechatData.openid}).then(function(res){
+            //             console.log("setopenid");
+            //         },function(err){
+            //             temperr.push(err)
+            //         })
+            //         ]).then(function(){
+            //             $state.go('signin')
+            //         })
+            //     }
+            //     else
+            //     {
           User.logIn({username: Storage.get('openid'), password: Storage.get('openid'), role: 'doctor'}).then(function (data) {
             console.log(data)
             if (data.results.mesg == 'login success!') {
@@ -191,95 +214,197 @@ angular.module('kidney', [
       $state.go('signin')
     }
 
-        // 是否登陆
-        // var isSignIN = Storage.get("isSignIN");
-        // if (isSignIN == 'YES') {
-        //     $state.go('tab.home');
-        // }
-
-        // 用户ID
-    var userid = ''
-        // 记录jmessage当前会话
+    ionic.Platform.fullScreen(true, true)
     $rootScope.conversation = {
       type: null,
       id: ''
     }
+    thisDoctor = null
+    var appState = {
+      background: false
+    }
+    document.addEventListener('pause', onPause, false)
+    document.addEventListener('resume', onResume, false)
+    function onPause () {
+      appState.background = true
+    }
+    function onResume () {
+      appState.background = false
+      var id = Storage.get('UID'),
+        name = thisDoctor === null ? '' : thisDoctor.name
+      mySocket.newUserOnce(id, name)
+    }
+    socket.on('error', function (data) {
+      console.error('socket error')
+      console.log(data)
+    })
+    socket.on('disconnected', function (data) {
+      console.error('disconnected')
+      console.error(data)
+    })
+    socket.on('reconnect', function (attempt) {
+      console.info('reconnect: ' + attempt)
+      var id = Storage.get('UID'),
+        name = thisDoctor === null ? '' : thisDoctor.name
+      mySocket.newUserOnce(id, name)
+            // socket.emit('newUser',{ user_name: name, user_id: id, client:'app'});
+    })
+    socket.on('kick', function () {
+      session.logOut()
+      $ionicPopup.alert({
+        title: '请重新登录'
+      }).then(function () {
+        // $scope.navigation_login=$sce.trustAsResourceUrl("http://proxy.haihonghospitalmanagement.com/member.php?mod=logging&action=logout&formhash=xxxxxx");
+        $state.go('signin')
+      })
+    })
+
+    socket.on('getMsg', listenGetMsg)
+
+    function listenGetMsg (data) {
+      console.info('getMsg')
+      console.log(data)
+            // $rootScope.$broadcast('im:getMsg',data);
+      if (!appState.background && (($rootScope.conversation.type == 'single' && $rootScope.conversation.id == data.msg.fromID) || ($rootScope.conversation.type == 'group' && $rootScope.conversation.id == data.msg.targetID))) return
+      notify.add(data.msg)
+      socket.emit('gotMsg', {msg: data.msg, userId: Storage.get('UID')})
+    }
+
+    // 是否登陆
+    var isSignIN = Storage.get('isSignIN')
+    if (isSignIN == 'YES') {
+      $state.go('tab.workplace')
+    }
+
+    // 用户ID
+    var userid = ''
+
     if (window.cordova && window.cordova.plugins.Keyboard) {
-            // Hide the accessory bar by default (remove this to show the accessory bar above the keyboard
-            // for form inputs)
+      // Hide the accessory bar by default (remove this to show the accessory bar above the keyboard
+      // for form inputs)
       cordova.plugins.Keyboard.hideKeyboardAccessoryBar(true)
 
-            // Don't remove this line unless you know what you are doing. It stops the viewport
-            // from snapping when text inputs are focused. Ionic handles this internally for
-            // a much nicer keyboard experience.
+      // Don't remove this line unless you know what you are doing. It stops the viewport
+      // from snapping when text inputs are focused. Ionic handles this internally for
+      // a much nicer keyboard experience.
       cordova.plugins.Keyboard.disableScroll(true)
     }
     if (window.StatusBar) {
-      StatusBar.styleDefault()
+      StatusBar.backgroundColorByHexString('#6ac4f8')
     }
+    // 显示通知栏消息
+    // custom消息内容
+    // 患者发送咨询：{
+    //     counsel:data.results,
+                // {
+                //     counselId : "CL201704280021"
+                //     diagnosisPhotoUrl : Array(0)
+                //     doctorId : "58eb2ee11e152b523139e723"
+                //     help : ""
+                //     hospital : "折腾"
+                //     messages : Array(0)
+                //     patientId : "58eb86b9a177a0eab3fbff38"
+                //     revisionInfo : Object
+                //     sickTime : "2017-04-20"
+                //     status : 1
+                //     symptom : ""
+                //     symptomPhotoUrl : Array(0)
+                //     time : "2017-04-28T14:36:40.403Z"
+                //     type : 1
+                //     visitDate : "2017-04-28T00:00:00.000Z"
+                //     __v : 0
+                //     _id : "5903537836408c33ae0663be"
+                // }
+    //     type:'card',
+    //     counselId:'',
+    //     patientId:patientId,
+    //     patientName:patientname,
+    //     doctorId:DoctorId,
+    //     //转发信息
+    //     fromId:
+    //     targetId:
+    // }
+    // 咨询转发医生：{
+    //     counsel:data.results,
+    //     type:'card',
+    //     counselId:'',
+    //     patientId:patientId,
+    //     patientName:patientname,
+    //     doctorId:DoctorId,
+    //     //转发信息
+    //     targetId:DoctorId,
+    //     fromId
+    // }
+    // 咨询转发团队：{
+    //     counsel:data.results,
+    //     type:'card',
+    //     counselId:'',
+    //     patientId:patientId,
+    //     patientName:patientname,
+    //     doctorId:DoctorId,
+    //     //转发信息
+    //     targetId:teamId,
+    //     fromId:doctorId,
+    //     //consultation info
+    //     consultationId:
+    // }
+    // 名片{
+    //     type:'contact',
+    //     doctorInfo:{},
+    //     //转发信息
+    //     fromId:
+    //     targetId:
+    // }
+    // 结束消息{
+    //    type:'endl',
+    //    info:
+    //    docId:
+    //    counseltype:1或2
+    //    counselId:
+    // }
+    $rootScope.$on('$stateChangeError', function (event, toState, toParams, fromState, fromParams, error) {
+      $state.go('signin')
+    })
+    // 显示通知栏消息
+    $rootScope.$on('$cordovaLocalNotification:click', function (event, note, state) {
+      console.log(arguments)
+      var msg = JSON.parse(note.data)
+      if (msg.targetType == 'group') {
+                // '0':团队交流  '1': 未结束病历  '2':已结束病历
+        if (msg.teamId == msg.targetID) {
+          $state.go('tab.group-chat', { type: '0', groupId: msg.targetID, teamId: msg.teamId})
+        } else {
+          $state.go('tab.group-chat', { type: '1', groupId: msg.targetID, teamId: msg.teamId})
+        }
+      } else {
+        if (msg.newsType == '12') {
+          $state.go('tab.detail', { type: '2', chatId: msg.fromID})
+        } else {
+          $state.go('tab.detail', { type: '1', chatId: msg.fromID})
+        }
+      }
+    })
 
-            // 显示通知栏消息
-            // custom消息内容
-            // 患者发送咨询：{
-            //     counsel:data.results,
-                        // {
-                        //     counselId : "CL201704280021"
-                        //     diagnosisPhotoUrl : Array(0)
-                        //     doctorId : "58eb2ee11e152b523139e723"
-                        //     help : ""
-                        //     hospital : "折腾"
-                        //     messages : Array(0)
-                        //     patientId : "58eb86b9a177a0eab3fbff38"
-                        //     revisionInfo : Object
-                        //     sickTime : "2017-04-20"
-                        //     status : 1
-                        //     symptom : ""
-                        //     symptomPhotoUrl : Array(0)
-                        //     time : "2017-04-28T14:36:40.403Z"
-                        //     type : 1
-                        //     visitDate : "2017-04-28T00:00:00.000Z"
-                        //     __v : 0
-                        //     _id : "5903537836408c33ae0663be"
-                        // }
-            //     type:'card',
-            //     patientId:patientId,
-            //     patientName:patientname,
-            //     doctorId:DoctorId,
-            //     //转发信息
-            //     fromId:
-            //     targetId:
-            // }
-            // 咨询转发医生：{
-            //     counsel:data.results,
-            //     type:'card',
-            //     patientId:patientId,
-            //     patientName:patientname,
-            //     doctorId:DoctorId,
-            //     //转发信息
-            //     targetId:DoctorId,
-            //     fromId
-            // }
-            // 咨询转发团队：{
-            //     counsel:data.results,
-            //     type:'card',
-            //     patientId:patientId,
-            //     patientName:patientname,
-            //     doctorId:DoctorId,
-            //     //转发信息
-            //     targetId:teamId,
-            //     fromId:doctorId,
-            //     //consultation info
-            //     consultationId:
-            // }
-            // 名片{
-            //     type:'contact',
-            //     doctorInfo:{},
-            //     //转发信息
-            //     fromId:
-            //     targetId:
-            // }
-            // 显示通知栏消息
-
+    if ($ionicPlatform.is('ios')) {
+      cordova.plugins.notification.local.on('click', function (note, state) {
+        alert(note.id + ' was clicked')
+        var msg = JSON.parse(note.data)
+        if (msg.targetType == 'group') {
+                // '0':团队交流  '1': 未结束病历  '2':已结束病历
+          if (msg.teamId == msg.targetID) {
+            $state.go('tab.group-chat', { type: '0', groupId: msg.targetID, teamId: msg.teamId})
+          } else {
+            $state.go('tab.group-chat', { type: '1', groupId: msg.targetID, teamId: msg.teamId})
+          }
+        } else {
+          if (msg.newsType == '12') {
+            $state.go('tab.detail', { type: '2', chatId: msg.fromID})
+          } else {
+            $state.go('tab.detail', { type: '1', chatId: msg.fromID})
+          }
+        }
+      }, this)
+    }
         // 聊天用，防止消息被keyboard遮挡
     window.addEventListener('native.keyboardshow', function (e) {
       $rootScope.$broadcast('keyboardshow', e.keyboardHeight)
@@ -292,26 +417,20 @@ angular.module('kidney', [
 
 // --------路由, url模式设置----------------
 .config(function ($stateProvider, $urlRouterProvider, $ionicConfigProvider) {
-    // Ionic uses AngularUI Router which uses the concept of states
-    // Learn more here: https://github.com/angular-ui/ui-router
-    // Set up the various states which the app can be in.
-    // Each state's controller can be found in controllers.js
+  // Ionic uses AngularUI Router which uses the concept of states
+  // Learn more here: https://github.com/angular-ui/ui-router
+  // Set up the various states which the app can be in.
+  // Each state's controller can be found in controllers.js
 
-    // ios 白屏可能问题配置  禁用侧滑后退？
+  // ios 白屏可能问题配置
   $ionicConfigProvider.views.swipeBackEnabled(false)
+  $ionicConfigProvider.platform.android.navBar.alignTitle('center')
     // android导航栏在顶部解决办法
   $ionicConfigProvider.platform.android.tabs.style('standard')
   $ionicConfigProvider.platform.android.tabs.position('standard')
 
     // 注册与登录
   $stateProvider
-    // 初始加载页
-    .state('welcome', {
-      cache: false,
-      url: '/welcome',
-      templateUrl: 'partials/others/welcome.html',
-      controller: 'welcomeCtrl'
-    })
     // 登陆
     .state('signin', {
       cache: false,
@@ -329,9 +448,9 @@ angular.module('kidney', [
     .state('phonevalid', {
       url: '/phonevalid',
       cache: false,
-      params: {phonevalidType: null},
       templateUrl: 'partials/others/phonevalid.html',
-      controller: 'phonevalidCtrl'
+      controller: 'phonevalidCtrl',
+      params: {last: null}
     })
     .state('setpassword', {
       cache: false,
@@ -342,34 +461,44 @@ angular.module('kidney', [
     .state('userdetail', {
       cache: false,
       url: '/userdetail',
+      params: {last: null},
       templateUrl: 'partials/others/userDetail.html',
       controller: 'userdetailCtrl'
     })
     .state('uploadcertificate', {
       cache: false,
-      url: '/uploadcertificate',
       params: {last: null},
+      url: '/uploadcertificate',
       templateUrl: 'partials/others/uploadcertificate.html',
       controller: 'uploadcertificateCtrl'
     })
+    // 未读消息列表
     .state('messages', {
       cache: false,
       url: '/messages',
       templateUrl: 'partials/others/AllMessage.html',
       controller: 'messageCtrl'
     })
-    .state('messagesDetail', {
-      cache: false,
-      url: '/messagesDetail',
-      templateUrl: 'partials/others/VaryMessage.html',
-      controller: 'VaryMessageCtrl'
+    // 未读未及时回复咨询列表
+    .state('nocomess', {
+      // cache: false,
+      url: '/nocomess',
+      templateUrl: 'partials/others/nocomess.html',
+      controller: 'nocomessCtrl'
     })
-    // 我的二维码(独立页面)
-    .state('myqrcode', {
-      cache: false,
-      url: '/myqrcode',
-      templateUrl: 'partials/others/myqrcode.html',
-      controller: 'QRcodeCtrl'
+    // 未修改治疗方案列表
+    .state('changeTasks', {
+      // cache: false,
+      url: '/changeTasks',
+      templateUrl: 'partials/others/changeTasks.html',
+      controller: 'changeTasksCtrl'
+    })
+    // 警报消息
+    .state('patientAlerts', {
+      // cache: false,
+      url: '/patientAlerts',
+      templateUrl: 'partials/others/patientAlerts.html',
+      controller: 'patientAlertsCtrl'
     })
 
     // 选项卡
@@ -380,26 +509,36 @@ angular.module('kidney', [
       controller: 'tabCtrl'
     })
 
-    // 主页面
-    .state('tab.home', {
-        // cache: false,
-      url: '/home',
+    // 工作台
+    .state('tab.workplace', {
+      cache: false,
+      url: '/workplace',
       views: {
-        'tab-home': {
-          cache: false,
-          controller: 'homeCtrl',
-          templateUrl: 'partials/home/homepage.html'
+        'tab-workplace': {
+          controller: 'workplaceCtrl',
+          templateUrl: 'partials/workplace/workplace.html'
         }
       }
     })
+
+    // 主页面
+    // .state('tab.home', {
+    //   cache: false,
+    //   url: '/home',
+    //   views: {
+    //     'tab-home': {
+    //       controller: 'homeCtrl',
+    //       templateUrl: 'partials/home/homepage.html'
+    //     }
+    //   }
+    // })
 
     // 咨询
     .state('tab.consult', {
         // cache: false,
       url: '/consult',
       views: {
-        'tab-consult': {
-          cache: false,
+        'tab-workplace': {
           controller: 'consultCtrl',
           templateUrl: 'partials/consult/consult.html'
         }
@@ -411,31 +550,30 @@ angular.module('kidney', [
       cache: false,
       url: '/patient',
       views: {
-        'tab-patient': {
+        'tab-workplace': {
           controller: 'patientCtrl',
           templateUrl: 'partials/patient/patient.html'
         }
       }
     })
 
-    // 交流
+    // 团队
     .state('tab.groups', {
         // cache: false,
         // type:   '0'=team  '1'=doctor
       url: '/groups/type/:type',
       views: {
         'tab-groups': {
-          cache: false,
           controller: 'groupsCtrl',
           templateUrl: 'partials/group/groups.html'
         }
       }
     })
 
-    // "我"页面
+    // "我的"页面
     .state('tab.me', {
-      cache: false,
       url: '/me',
+      cache: false,
       views: {
         'tab-me': {
           controller: 'meCtrl',
@@ -444,17 +582,165 @@ angular.module('kidney', [
       }
     })
 
+    // "论坛"页面
+    .state('tab.allposts', {
+      url: '/allposts',
+      cache: false,
+      views: {
+        'tab-forum': {
+          controller: 'allpostsCtrl',
+          templateUrl: 'partials/forum/allposts.html'
+        }
+      }
+    })
+    .state('tab.myposts', {
+      url: '/myposts',
+      cache: false,
+      views: {
+        'tab-forum': {
+          templateUrl: 'partials/forum/myposts.html',
+          controller: 'mypostsCtrl'
+        }
+      }
+    })
+    .state('tab.mycollection', {
+      url: '/mycollection',
+      cache: false,
+      views: {
+        'tab-forum': {
+          controller: 'mycollectionCtrl',
+          templateUrl: 'partials/forum/mycollection.html'
+        }
+      }
+    })
+    .state('post', {
+      url: '/post',
+      cache: false,
+      templateUrl: 'partials/forum/post.html',
+      controller: 'postCtrl'
+    })
+    .state('comment', {
+      url: '/comment',
+      cache: false,
+      templateUrl: 'partials/forum/comment.html',
+      controller: 'commentCtrl'
+    })
+    .state('postsdetail', {
+      url: '/postsdetail',
+      cache: false,
+      templateUrl: 'partials/forum/postsdetail.html',
+      controller: 'postsdetailCtrl'
+    })
+    .state('reply', {
+      url: '/reply',
+      cache: false,
+      templateUrl: 'partials/forum/reply.html',
+      controller: 'replyCtrl'
+    })
+
     // views-tab-home
 
-    // views-tab-consult
+    // views-tab-workplace
 
+    // 我的二维码
+    .state('tab.QRcode', {
+        // cache: false,
+      url: '/qrcode',
+      views: {
+        'tab-workplace': {
+          controller: 'QRcodeCtrl',
+          templateUrl: 'partials/workplace/qrcode.html'
+        }
+      }
+    })
+    // 服务管理
+    .state('tab.myservice', {
+      // cache: false,
+      url: '/myservice',
+      params: {last: null},
+      views: {
+        'tab-workplace': {
+          controller: 'myserviceCtrl',
+          templateUrl: 'partials/workplace/myservice.html'
+        }
+      }
+    })
+    .state('tab.myservice2', {
+      // cache: false,
+      url: '/myservice2',
+      params: {last: null},
+      views: {
+        'tab-me': {
+          controller: 'myserviceCtrl',
+          templateUrl: 'partials/workplace/myservice.html'
+        }
+      }
+    })
+
+    // 面诊服务页面
+    .state('tab.faceconsult', {
+      cache: false,
+      url: '/faceconsult',
+
+      views: {
+        'tab-workplace': {
+          controller: 'faceconsultCtrl',
+          templateUrl: 'partials/me/faceconsult.html'
+        }
+      }
+    })
+    .state('tab.faceconsult2', {
+      cache: false,
+      url: '/faceconsult',
+
+      views: {
+        'tab-me': {
+          controller: 'faceconsultCtrl',
+          templateUrl: 'partials/me/faceconsult.html'
+        }
+      }
+    })
+    // 我的预约
+    .state('tab.myreserve', {
+      cache: false,
+      url: '/myreserve',
+      views: {
+        'tab-workplace': {
+          controller: 'myreserveCtrl',
+          templateUrl: 'partials/workplace/myreserve.html'
+        }
+      }
+    })
+    // 主管医生审核申请--rzx
+    .state('tab.review', {
+      // cache: false,
+      url: '/review',
+      views: {
+        'tab-workplace': {
+          controller: 'reviewCtrl',
+          templateUrl: 'partials/workplace/review.html'
+        }
+      }
+    })
+
+    // 预约面诊列表
+    .state('tab.face', {
+        // cache: false,
+      url: '/face',
+      views: {
+        'tab-workplace': {
+          controller: 'faceCtrl',
+          templateUrl: 'partials/workplace/face.html'
+        }
+      }
+    })
+    // 咨询
     // 进行中
     .state('tab.doing', {
-        // cache: false,
+      cache: false,
       url: '/doing',
       views: {
-        'tab-consult': {
-          cache: false,
+        'tab-workplace': {
           controller: 'doingCtrl',
           templateUrl: 'partials/consult/doing.html'
         }
@@ -464,22 +750,22 @@ angular.module('kidney', [
     .state('tab.detail', {
         // cache: false,
         // [type]:0=已结束;1=进行中;2=医生
-      url: '/detail/:type/:chatId/:counselId',
+        // 传一个counselId进来
+      url: '/detail/:type/:chatId',
       views: {
-        'tab-consult': {
-          cache: false,
+        'tab-workplace': {
           controller: 'detailCtrl',
           templateUrl: 'partials/consult/detail.html'
         }
       }
         // params:{counselId:null}
     })
+
     .state('tab.selectDoc', {
         // cache: false,
       url: '/selectdoc',
       views: {
-        'tab-consult': {
-          cache: false,
+        'tab-workplace': {
           controller: 'selectDocCtrl',
           templateUrl: 'partials/consult/select-doctor.html'
         }
@@ -490,8 +776,7 @@ angular.module('kidney', [
         // cache: false,
       url: '/selectteam',
       views: {
-        'tab-consult': {
-          cache: false,
+        'tab-workplace': {
           controller: 'selectTeamCtrl',
           templateUrl: 'partials/consult/select-team.html'
         }
@@ -500,25 +785,32 @@ angular.module('kidney', [
     })
     // 已完成
     .state('tab.did', {
-        // cache: false,
+      cache: false,
       url: '/did',
       views: {
-        'tab-consult': {
-          cache: false,
+        'tab-workplace': {
           controller: 'didCtrl',
           templateUrl: 'partials/consult/did.html'
         }
       }
     })
 
-    // views-tab-patient
-
     // 患者详情页面
+    .state('tab.Report', {
+      url: '/Report',
+      cache: false,
+      views: {
+        'tab-workplace': {
+          controller: 'ReportCtrl',
+          templateUrl: 'partials/patient/Report.html'
+        }
+      }
+    })
     .state('tab.patientDetail', {
       cache: false,
       url: '/patientDetail',
       views: {
-        'tab-patient': {
+        'tab-workplace': {
           controller: 'patientDetailCtrl',
           templateUrl: 'partials/patient/patientDetail.html'
         }
@@ -528,31 +820,30 @@ angular.module('kidney', [
         // cache: false,
       url: '/DoctorDiagnose',
       views: {
-        'tab-patient': {
-          cache: false,
+        'tab-workplace': {
           controller: 'DoctorDiagnoseCtrl',
           templateUrl: 'partials/patient/DoctorDiagnose.html'
         }
       }
     })
-    .state('tab.TestRecord', {
-        // cache: false,
-      url: '/TestRecord',
-      views: {
-        'tab-patient': {
-          cache: true,
-          controller: 'TestRecordCtrl',
-          templateUrl: 'partials/patient/testrecord.html'
-        }
-      }
-    })
+    // .state('tab.TestRecord', {
+    //     // cache: false,
+    //   url: '/TestRecord',
+    //   params: {PatinetId: null},
+    //   views: {
+    //     'tab-workplace': {
+    //       cache: true,
+    //       controller: 'TestRecordCtrl',
+    //       templateUrl: 'partials/patient/testrecord.html'
+    //     }
+    //   }
+    // })
 
     .state('tab.TaskSet', {
-        // cache: false,
+      cache: false,
       url: '/TaskSet',
       views: {
-        'tab-patient': {
-          cache: false,
+        'tab-workplace': {
           controller: 'TaskSetCtrl',
           templateUrl: 'partials/patient/TaskSet.html'
         }
@@ -563,8 +854,7 @@ angular.module('kidney', [
         // cache: false,
       url: '/HealthInfo',
       views: {
-        'tab-patient': {
-          cache: false,
+        'tab-workplace': {
           controller: 'HealthInfoCtrl',
           templateUrl: 'partials/patient/HealthInfo.html'
         }
@@ -576,20 +866,51 @@ angular.module('kidney', [
       url: '/HealthInfoDetail',
       params: {id: null},
       views: {
-        'tab-patient': {
-          cache: false,
+        'tab-workplace': {
           controller: 'HealthDetailCtrl',
           templateUrl: 'partials/patient/editHealthInfo.html'
         }
       }
     })
 
+// // 主管医生审核申请--rzx
+//     .state('tab.review', {
+//         // cache: false,
+//       url: '/review',
+//       views: {
+//         'tab-patient': {
+//           controller: 'reviewCtrl',
+//           templateUrl: 'partials/patient/review.html'
+//         }
+//       }
+//     })
+
+// // 预约面诊列表
+//     .state('tab.face', {
+//         // cache: false,
+//       url: '/face',
+//       views: {
+//         'tab-patient': {
+//           controller: 'faceCtrl',
+//           templateUrl: 'partials/patient/face.html'
+//         }
+//       }
+//     })
+   .state('tab.GroupMessage', {
+        // cache: false,
+     url: '/GroupMessage',
+     views: {
+       'tab-workplace': {
+         controller: 'GroupMessageCtrl',
+         templateUrl: 'partials/patient/GroupMessage.html'
+       }
+     }
+   })
     // views-tab-groups
     .state('tab.new-group', {
       url: '/newgroup',
       views: {
         'tab-groups': {
-          cache: false,
           templateUrl: 'partials/group/new-group.html',
           controller: 'NewGroupCtrl'
         }
@@ -599,7 +920,6 @@ angular.module('kidney', [
       url: '/groupsearch',
       views: {
         'tab-groups': {
-          cache: false,
           templateUrl: 'partials/group/groups-search.html',
           controller: 'GroupsSearchCtrl'
         }
@@ -609,7 +929,6 @@ angular.module('kidney', [
       url: '/doctorsearch',
       views: {
         'tab-groups': {
-          cache: false,
           templateUrl: 'partials/group/doctor-search.html',
           controller: 'DoctorSearchCtrl'
         }
@@ -619,7 +938,6 @@ angular.module('kidney', [
       url: '/groups/add/:teamId',
       views: {
         'tab-groups': {
-          cache: false,
           templateUrl: 'partials/group/group-add.html',
           controller: 'GroupAddCtrl'
         }
@@ -629,7 +947,6 @@ angular.module('kidney', [
       url: '/groups/:teamId/kick',
       views: {
         'tab-groups': {
-          cache: false,
           templateUrl: 'partials/group/group-kick.html',
           controller: 'GroupKickCtrl'
         }
@@ -640,7 +957,6 @@ angular.module('kidney', [
       url: '/groups/:teamId/addmember/:type/',
       views: {
         'tab-groups': {
-          cache: false,
           templateUrl: 'partials/group/group-add-member.html',
           controller: 'GroupAddMemberCtrl'
         }
@@ -650,17 +966,16 @@ angular.module('kidney', [
       url: '/groups/:teamId/detail',
       views: {
         'tab-groups': {
-          cache: false,
           templateUrl: 'partials/group/group-detail.html',
           controller: 'GroupDetailCtrl'
         }
       }
+            // params:{teamId:null}
     })
     .state('tab.group-qrcode', {
       url: '/groups/qrcode',
       views: {
         'tab-groups': {
-          cache: false,
           templateUrl: 'partials/group/group-qrcode.html',
           controller: 'GroupQrcodeCtrl'
         }
@@ -672,7 +987,6 @@ angular.module('kidney', [
       url: '/groups/chat/t/:type/:groupId/:teamId',
       views: {
         'tab-groups': {
-          cache: false,
           templateUrl: 'partials/group/group-chat.html',
           controller: 'GroupChatCtrl'
         }
@@ -680,7 +994,7 @@ angular.module('kidney', [
     })
     .state('tab.view-chat', {
         // '0':团队交流  '1': 未结束病历  '2':已结束病历
-      url: '/viewchat/:doctorId/:patientId',
+      url: '/viewchat/:doctorId/:patientId/:groupId/:teamId',
       views: {
         'tab-groups': {
           templateUrl: 'partials/group/view-chat.html',
@@ -692,7 +1006,6 @@ angular.module('kidney', [
       url: '/groups/conclusion/:groupId/:teamId',
       views: {
         'tab-groups': {
-          cache: false,
           templateUrl: 'partials/group/conclusion.html',
           controller: 'GroupConclusionCtrl'
         }
@@ -703,7 +1016,6 @@ angular.module('kidney', [
       url: '/group/patients/:teamId',
       views: {
         'tab-groups': {
-          cache: false,
           controller: 'groupPatientCtrl',
           templateUrl: 'partials/group/group-patient.html'
         }
@@ -715,7 +1027,6 @@ angular.module('kidney', [
       url: '/group/doctor/:memberId/profile',
       views: {
         'tab-groups': {
-          cache: false,
           controller: 'doctorProfileCtrl',
           templateUrl: 'partials/group/profile.html'
         }
@@ -729,45 +1040,40 @@ angular.module('kidney', [
       url: '/bill',
       views: {
         'tab-me': {
-          cache: false,
           controller: 'billCtrl',
           templateUrl: 'partials/me/bill.html'
         }
       }
     })
-
     // schedual
     .state('tab.schedual', {
         // cache: false,
       url: '/schedual',
       views: {
         'tab-me': {
-          cache: false,
           controller: 'schedualCtrl',
           templateUrl: 'partials/me/schedual.html'
         }
       }
     })
-    // 我的二维码
-    .state('tab.QRcode', {
-        // cache: false,
-      url: '/qrcode',
-      views: {
-        'tab-me': {
-          cache: false,
-          controller: 'QRcodeCtrl',
-          templateUrl: 'partials/me/qrcode.html'
-        }
-      }
-    })
+    // // 我的二维码
+    // .state('tab.QRcode', {
+    //     // cache: false,
+    //   url: '/qrcode',
+    //   views: {
+    //     'tab-me': {
+    //       controller: 'QRcodeCtrl',
+    //       templateUrl: 'partials/me/qrcode.html'
+    //     }
+    //   }
+    // })
 
     // 我的信息
     .state('tab.myinfo', {
-        // cache: false,
+      cache: false,
       url: '/myinfo',
       views: {
         'tab-me': {
-          cache: false,
           controller: 'myinfoCtrl',
           templateUrl: 'partials/me/myinfo.html'
         }
@@ -780,9 +1086,20 @@ angular.module('kidney', [
       url: '/myfee',
       views: {
         'tab-me': {
-          cache: false,
           controller: 'myfeeCtrl',
           templateUrl: 'partials/me/myfee.html'
+        }
+      }
+    })
+
+    // 我的账户管理
+    .state('tab.accountManage', {
+        // cache: false,
+      url: '/myfee/accountManage',
+      views: {
+        'tab-me': {
+          controller: 'accountManageCtrl',
+          templateUrl: 'partials/me/accountManage.html'
         }
       }
     })
@@ -793,13 +1110,11 @@ angular.module('kidney', [
       url: '/feedback',
       views: {
         'tab-me': {
-          cache: false,
           controller: 'feedbackCtrl',
           templateUrl: 'partials/me/feedback.html'
         }
       }
     })
-
     // 评价展示
     .state('tab.commentdetail', {
       url: '/commentdetail',
@@ -814,13 +1129,24 @@ angular.module('kidney', [
       }
     })
 
+    // 自动转发页
+    .state('tab.forwarding', {
+      // cache: false,
+      url: '/me/forwarding',
+      views: {
+        'tab-me': {
+          controller: 'forwardingCtrl',
+          templateUrl: 'partials/me/forwarding.html'
+        }
+      }
+    })
+
     // 设置
     .state('tab.set', {
-        // cache: false,
+      // cache: false,
       url: '/set',
       views: {
         'tab-me': {
-          cache: false,
           controller: 'setCtrl',
           templateUrl: 'partials/me/set.html'
         }
@@ -831,7 +1157,6 @@ angular.module('kidney', [
       url: '/me/set/set-content/:type',
       views: {
         'tab-me': {
-          cache: false,
           templateUrl: 'partials/me/set/set-content.html',
           controller: 'set-contentCtrl'
         }
@@ -839,11 +1164,10 @@ angular.module('kidney', [
     })
     // 查看协议页
     .state('tab.viewAgree', {
-        // cache: false,
+      // cache: false,
       url: '/me/set/viewAgree',
       views: {
         'tab-me': {
-          cache: false,
           controller: 'viewAgreeCtrl',
           templateUrl: 'partials/me/set/viewAgree.html'
         }
@@ -860,28 +1184,141 @@ angular.module('kidney', [
         }
       }
     })
+
     // 关于
     .state('tab.about', {
         // cache: false,
       url: '/about',
       views: {
         'tab-me': {
-          cache: false,
           controller: 'aboutCtrl',
           templateUrl: 'partials/me/about.html'
         }
       }
     })
 
-  // $urlRouterProvider.otherwise('/welcome')
+    // 科室管理
+    .state('tab.nocounsel', {
+        // cache: false,
+      url: '/nocounsel',
+      views: {
+        'tab-me': {
+          controller: 'nocounselCtrl',
+          templateUrl: 'partials/me/nocounsel.html'
+        }
+      }
+    })
+    // 未及时回复咨询报告详情
+    .state('tab.nocodetail', {
+        // cache: false,
+      url: '/nocodetail',
+      views: {
+        'tab-me': {
+          controller: 'nocodetailCtrl',
+          templateUrl: 'partials/me/nocodetail.html'
+        }
+      }
+    })
+
+  // $urlRouterProvider.otherwise('/signin')
 })
+.controller('tabCtrl', ['$state', '$scope', '$interval', 'Storage', '$ionicPopup', function ($state, $scope, $interval, Storage, $ionicPopup) {
+  $scope.goWorkplace = function () {
+    setTimeout(function () {
+      $state.go('tab.workplace', {})
+    }, 20)
+  }
+  // $scope.goHome = function () {
+  //   setTimeout(function () {
+  //     $state.go('tab.home', {})
+  //   }, 20)
+  // }
+  $scope.destroy = function () {
+    // console.log('destroy')
+    if (Storage.get('reviewStatus') == 1) {
+      if (RefreshUnread) {
+        $interval.cancel(RefreshUnread)
+      }
+    }
+  }
+  $scope.goAllposts = function () {
+    if (Storage.get('reviewStatus') == 1) {
+      setTimeout(function () {
+        $state.go('tab.allposts', {type: '0'})
+      }, 20)
+    } else if (Storage.get('reviewStatus') == 0 || Storage.get('reviewStatus') == 2) {
+      $ionicPopup.show({
+        title: '您暂未通过审核，您可前往“我的资料”修改个人信息，其他操作没有权限，请耐心等待！',
+        buttons: [
+          {
+            text: '確定',
+            type: 'button-positive',
+            onTap: function (e) {
+              // $state.go('signin')
+            }
+          }
+        ]
+      })
+    } else {
+      $ionicPopup.show({
+        title: '数据异常！',
+        buttons: [
+          {
+            text: '確定',
+            type: 'button-positive'
+          }
+        ]
+      })
+    }
+  }
+  $scope.goGroups = function () {
+    if (Storage.get('reviewStatus') == 1) {
+      setTimeout(function () {
+        $state.go('tab.groups', {type: '0'})
+      }, 20)
+    } else if (Storage.get('reviewStatus') == 0 || Storage.get('reviewStatus') == 2) {
+      $ionicPopup.show({
+        title: '您暂未通过审核，您可前往“我的资料”修改个人信息，其他操作没有权限，请耐心等待！',
+        buttons: [
+          {
+            text: '確定',
+            type: 'button-positive',
+            onTap: function (e) {
+              // $state.go('signin')
+            }
+          }
+        ]
+      })
+    } else {
+      $ionicPopup.show({
+        title: '数据异常！',
+        buttons: [
+          {
+            text: '確定',
+            type: 'button-positive'
+          }
+        ]
+      })
+    }
+  }
+  // $scope.goPatient = function () {
+  //   setTimeout(function () {
+  //     $state.go('tab.patient', {})
+  //   }, 20)
+  // }
+  $scope.goMe = function () {
+    setTimeout(function () {
+      $state.go('tab.me', {})
+    }, 20)
+  }
+}])
 
 // $httpProvider.interceptors提供http request及response的预处理
 .config(['$httpProvider', 'jwtOptionsProvider', function ($httpProvider, jwtOptionsProvider) {
     // 下面的getter可以注入各种服务, service, factory, value, constant, provider等, constant, provider可以直接在.config中注入, 但是前3者不行
   jwtOptionsProvider.config({
-    whiteListedDomains: ['121.196.221.44', '121.43.107.106', 'testpatient.haihonghospitalmanagement.com', 'testdoctor.haihonghospitalmanagement.com', 'patient.haihonghospitalmanagement.com', 'doctor.haihonghospitalmanagement.com', 'localhost'],
-    tokenGetter: ['options', 'jwtHelper', '$http', 'CONFIG', 'Storage', '$state', '$ionicLoading', '$ionicPopup', function (options, jwtHelper, $http, CONFIG, Storage, $state, $ionicLoading, $ionicPopup) {
+    whiteListedDomains: ['docker2.haihonghospitalmanagement.com', '121.196.221.44', '106.15.185.172', 'testpatient.haihonghospitalmanagement.com', 'testdoctor.haihonghospitalmanagement.com', 'patient.haihonghospitalmanagement.com', 'doctor.haihonghospitalmanagement.com', 'localhost'],
+    tokenGetter: ['options', 'jwtHelper', '$http', 'CONFIG', 'Storage', '$state', '$ionicPopup', '$interval', function (options, jwtHelper, $http, CONFIG, Storage, $state, $ionicPopup, $interval) {
          // console.log(config);
         // console.log(CONFIG.baseUrl);
 
@@ -895,6 +1332,9 @@ angular.module('kidney', [
 
       var isExpired = true
       try {
+          /*
+           * 由于jwt自带的过期判断方法与服务器端使用的加密方法不匹配，使用jwthelper解码的方法对token进行解码后自行判断token是否过期
+           */
             // isExpired = jwtHelper.isTokenExpired(token);
         var temp = jwtHelper.decodeToken(token)
         if (temp.exp === 'undefined') {
@@ -919,24 +1359,37 @@ angular.module('kidney', [
             // This is a promise of a JWT token
              // console.log(token);
         if (refreshToken && refreshToken.length >= 16) {  // refreshToken字符串长度应该大于16, 小于即为非法
+                /**
+                 * [刷新token]
+                 * @Author   TongDanyang
+                 * @DateTime 2017-07-05
+                 * @param    {[string]}  refreshToken [description]
+                 * @return   {[object]}  data.results  [新的token信息]
+                 */
+          console.log(options)
           return $http({
-            url: CONFIG.baseUrl + 'token/refresh?refresh_token=' + refreshToken,
+            url: CONFIG.baseTwoUrl + 'token/refresh?refresh_token=' + refreshToken,
                     // This makes it so that this request doesn't send the JWT
             skipAuthorization: true,
             method: 'GET',
             timeout: 5000
           }).then(function (res) { // $http返回的值不同于$resource, 包含config等对象, 其中数据在res.data中
-                     // console.log(res);
+            console.log(res.status)
+            console.log(res.data)
+            console.log('成功')
                     // sessionStorage.setItem('token', res.data.token);
                     // sessionStorage.setItem('refreshToken', res.data.refreshToken);
             Storage.set('TOKEN', res.data.results.token)
             Storage.set('refreshToken', res.data.results.refreshToken)
             return res.data.results.token
           }, function (err) {
+            console.log('错误')
+            console.log(err.status)
+            console.log(err.data)
             console.log(err)
             if (refreshToken == Storage.get('refreshToken')) {
-                      // console.log("凭证不存在!")
-                      // console.log(options)
+              // console.log("凭证不存在!")
+              console.log(options)
               $ionicPopup.show({
                 title: '您离开太久了，请重新登录',
                 buttons: [
@@ -948,6 +1401,18 @@ angular.module('kidney', [
                     text: '確定',
                     type: 'button-positive',
                     onTap: function (e) {
+                      // 清除登陆信息
+                      Storage.rm('password')
+                      // Storage.rm('UID');
+                      Storage.rm('doctorunionid')
+                      Storage.rm('IsSignIn')
+                      // Storage.rm('USERNAME');
+                      Storage.rm('PASSWORD')
+                      Storage.rm('userid')
+                      $interval.cancel(RefreshUnread)
+                      // mySocket.cancelAll()
+                      // socket.emit('disconnect')
+                      // socket.disconnect()
                       $state.go('signin')
                     }
                   }
@@ -961,6 +1426,7 @@ angular.module('kidney', [
             return null
           })
         } else {
+          console.log('清除refreshtoken')
           Storage.rm('refreshToken')  // 如果是非法refreshToken, 删除之
           return null
         }
@@ -972,31 +1438,4 @@ angular.module('kidney', [
   })
 
   $httpProvider.interceptors.push('jwtInterceptor')
-}])
-.controller('tabCtrl', ['$state', '$scope', function ($state, $scope) {
-  $scope.goHome = function () {
-    setTimeout(function () {
-      $state.go('tab.home', {})
-    }, 20)
-  }
-  $scope.goConsult = function () {
-    setTimeout(function () {
-      $state.go('tab.consult', {})
-    }, 20)
-  }
-  $scope.goGroups = function () {
-    setTimeout(function () {
-      $state.go('tab.groups', {type: '0'})
-    }, 20)
-  }
-  $scope.goPatient = function () {
-    setTimeout(function () {
-      $state.go('tab.patient', {})
-    }, 20)
-  }
-  $scope.goMe = function () {
-    setTimeout(function () {
-      $state.go('tab.me', {})
-    }, 20)
-  }
 }])

@@ -5,25 +5,25 @@
     <!--    <ion-nav-buttons side="right">
       <a class="button button-icon icon ion-android-add" href="#/tab/groups/search" ng-click="popover.show($event)"></a>
     </ion-nav-buttons> -->
-    <ion-nav-bar class="bar-positive " align-title="center">
-        <ion-nav-buttons side="left">
-          <button class="button button-icon icon ion-ios-arrow-left fc-ff" ng-click="$ionicGoBack()"></button>
-        </ion-nav-buttons>
-    </ion-nav-bar>
+  <ion-nav-bar class="bar-positive " align-title="center">
+    <ion-nav-buttons side="left">
+      <button class="button button-icon icon ion-ios-arrow-left fc-ff" ng-click="$ionicGoBack()"></button>
+    </ion-nav-buttons>
+  </ion-nav-bar>
     <ion-content class=" gray-back">
         <div style="background-color: #FFF" class="padding">
         <div class="avatar-item" ng-repeat="member in members" ng-click="viewProfile(member)">
-            <img src="{{member.photoUrl|changedoctorimgip}}" />
+            <img src="{{member.photoUrl || 'img/doctor.png'}}" />
             <div>{{member.name}}</div>
         </div>
         <div style="vertical-align: top" class="avatar-item" ng-click="addMember()">
             <div style="width:100%;padding: 10%;
-          box-sizing: border-box;
-          position: relative;border:1px  solid #aaa;font-size:3em;color:#aaa">
+		  box-sizing: border-box;
+		  position: relative;border:1px  solid #aaa;font-size:3em;color:#aaa">
                 <i class="icon ion-android-add"></i>
             </div>
         </div>
-            </div>
+			</div>
         <div class="list margin-list">
             <div class="item" href="#">
                 团队名称

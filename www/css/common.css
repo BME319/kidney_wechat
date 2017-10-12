@@ -40,10 +40,10 @@
   color: #6c6c6c!important;
 }
 .fc-66{
-  color: #666666;
+  color: rgba(248, 248, 248, 0.87);
 }
 .fc-2b{
-  color: #2b7633;
+  color: #f8f8f8;
 }
 .fc-8c{
   color: #8c8c8c;
@@ -65,7 +65,7 @@
 }
 /*maginr*/
 .m-b10{
-margin-bottom:10px!important; ;
+  margin-bottom:10px!important; ;
 }
 .m-b5{
   margin-bottom: 5px!important;
@@ -93,7 +93,7 @@ margin-bottom:10px!important; ;
   font-size: 14px!important;
 }
 .f16{
-  font-size: 16px!important;
+  font-size: 18px!important;
 }
 .f-18{
   font-size: 18px;
@@ -132,14 +132,14 @@ margin-bottom:10px!important; ;
   border-color: #63c1f7!important;
   box-shadow: none;
 }
-  /*选项卡颜色*/
+/*选项卡颜色*/
 .bar-positive .button{
   background-color: #6ac4f8;
   border: none;
   color: #fff;
 }
 .bar-positive .button span{
-  padding: 0 12px;
+  /*padding: 0 12px;*/
   font-size: 14px;
 }
 .bar-positive .button:last-child span{
@@ -149,13 +149,13 @@ margin-bottom:10px!important; ;
   border-radius: inherit;
 }
 .bar-positive .button.active, .bar-positive .button.activated {
-  background-color: #fafafa;
+  background-color: #6ac4f8;
   color: #333;
 }
 
-.bar-positive .button:hover{
+/*.bar-positive .button:hover{
   color: #646464;
-}
+}*/
 .button-bar > .button{
   padding: 0;
 }
@@ -181,7 +181,6 @@ margin-bottom:10px!important; ;
 }*/
 /*图片居中*/
 .img-cen{
-  display: table;
   table-layout: fixed;
 }
 .img-cen div{
@@ -191,6 +190,7 @@ margin-bottom:10px!important; ;
 .top16{
   top:16px
 }
+
 .right15{
   right: 15px
 }

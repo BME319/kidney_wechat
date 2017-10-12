@@ -1,13 +1,8 @@
 <ion-view hide-tabs view-title="团队管理">
-    <ion-nav-bar class="bar-positive " align-title="center">
-        <ion-nav-buttons side="left">
-          <button class="button button-icon icon ion-ios-arrow-left fc-ff" ng-click="$ionicGoBack()"></button>
-        </ion-nav-buttons>
-      </ion-nav-bar> 
     <ion-content style="padding-top:10px" class="gray-back">
         <div class="list">
             <div class="item item-avatar" ng-repeat="d in doctors">
-                <img src="{{d.photoUrl|changedoctorimgip}}">
+                <img src="{{d.photoUrl || 'img/DefaultAvatar.jpg'}}">
                 <div class="doctor-msg-left balanced balanced-border">{{teamname}}</div>
                 <div style="display:inline-block;width:70%">
                     <span>{{d.name}}</span> {{d.title}}
