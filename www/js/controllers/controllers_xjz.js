@@ -158,7 +158,6 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
 
     })
   }
-
 }])
 /**
  * 查找医生
@@ -583,7 +582,7 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
  * @DateTime 2017-07-05
  */
 .controller('detailCtrl', ['$ionicPlatform', '$scope', '$state', '$rootScope', '$ionicModal', '$ionicScrollDelegate', '$ionicHistory', '$ionicPopover', '$ionicPopup', 'Camera', 'voice', '$http', 'CONFIG', 'arrTool', 'Communication', 'Counsel', 'Storage', 'Doctor', 'Patient2', '$q', 'New', 'Mywechat', 'Account', 'socket', 'notify', '$timeout', '$ionicLoading', function ($ionicPlatform, $scope, $state, $rootScope, $ionicModal, $ionicScrollDelegate, $ionicHistory, $ionicPopover, $ionicPopup, Camera, voice, $http, CONFIG, arrTool, Communication, Counsel, Storage, Doctor, Patient2, $q, New, Mywechat, Account, socket, notify, $timeout, $ionicLoading) {
-  if ($ionicPlatform.is('ios')) cordova.plugins.Keyboard.disableScroll(true)
+  // if ($ionicPlatform.is('ios')) cordova.plugins.Keyboard.disableScroll(true)
 
   $scope.input = {
     text: ''
@@ -1858,7 +1857,7 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
  * @DateTime 2017-07-05
  */
 .controller('GroupChatCtrl', ['$ionicPlatform', '$scope', '$state', '$ionicHistory', '$http', '$ionicModal', '$ionicScrollDelegate', '$rootScope', '$stateParams', '$ionicPopover', '$ionicLoading', '$ionicPopup', 'Camera', 'voice', 'Communication', 'Storage', 'Doctor', '$q', 'CONFIG', 'arrTool', 'New', 'socket', 'notify', '$timeout', function ($ionicPlatform, $scope, $state, $ionicHistory, $http, $ionicModal, $ionicScrollDelegate, $rootScope, $stateParams, $ionicPopover, $ionicLoading, $ionicPopup, Camera, voice, Communication, Storage, Doctor, $q, CONFIG, arrTool, New, socket, notify, $timeout) {
-  if ($ionicPlatform.is('ios'))cordova.plugins.Keyboard.disableScroll(true)
+  // if ($ionicPlatform.is('ios'))cordova.plugins.Keyboard.disableScroll(true)
 
   // $scope.itemStyle = {'position': 'absolute', 'top': '44px', 'width': '100%', 'margin': '0', 'min-height': '35vh', 'max-height': '55vh', 'overflow-y': 'scroll'}
   // if (ionic.Platform.isIOS()) {
