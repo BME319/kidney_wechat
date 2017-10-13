@@ -533,12 +533,12 @@ angular.module('kidney.services', ['ionic', 'ngResource'])
 
   var Mywechat = function () {
     return $resource(CONFIG.baseTwoUrl + ':path/:route', {path: 'wechat'}, {
-      settingConfig: {method: 'GET', skipAuthorization: true, params: {route: 'settingConfig'}, timeout: 100000},
+      settingConfig: {method: 'GET', params: {route: 'settingConfig'}, timeout: 100000},
       getUserInfo: {method: 'GET', skipAuthorization: true, params: {route: 'getUserInfo'}, timeout: 10000},
       download: {method: 'GET', params: {route: 'download'}, timeout: 100000},
-      // gettokenbycode: {method: 'GET', params: {route: 'gettokenbycode'}, timeout: 100000}, 
-      messageTemplate: {method: 'POST', params: {route: 'messageTemplate'}, timeout: 100000}, 
-      createTDCticket: {method: 'POST', params: {route: 'createTDCticket'}, timeout: 100000},
+      // gettokenbycode: {method: 'GET', params: {route: 'gettokenbycode'}, timeout: 100000},
+      messageTemplate: {method: 'POST', params: {route: 'messageTemplate'}, timeout: 100000},
+      createTDCticket: {method: 'POST', params: {route: 'createTDCticket'}, timeout: 100000}
     })
   }
 
