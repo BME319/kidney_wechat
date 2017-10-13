@@ -20,7 +20,7 @@ angular.module('kidney', [
   'angular-jwt'
 ])
 
-.run(['version', '$ionicPlatform', '$state', 'Storage', '$rootScope', 'CONFIG', 'Communication', 'notify', '$interval', 'socket', 'mySocket', '$ionicPopup', 'session', '$location', '$ionicHistory', 'Mywechat', 'User', 'Doctor', 'jmapi', '$ionicPopup', '$q', function (version, $ionicPlatform, $state, Storage, $rootScope, CONFIG, Communication, notify, $interval, socket, mySocket, $ionicPopup, session, $location, $ionicHistory, Mywechat, User, Doctor, jmapi, $ionicPopup, $q) {
+.run(['version', '$ionicPlatform', '$state', 'Storage', '$rootScope', 'CONFIG', 'Communication', 'notify', '$interval', 'socket', 'mySocket', '$ionicPopup', 'session', '$location', '$ionicHistory', 'Mywechat', 'User', 'Doctor', '$ionicPopup', '$q', function (version, $ionicPlatform, $state, Storage, $rootScope, CONFIG, Communication, notify, $interval, socket, mySocket, $ionicPopup, session, $location, $ionicHistory, Mywechat, User, Doctor, $ionicPopup, $q) {
   // 虚拟返回键显示退出提示框
   $ionicPlatform.registerBackButtonAction(function (e) {
     e.preventDefault()
@@ -123,7 +123,7 @@ angular.module('kidney', [
               Storage.set('isSignIn', true)
               Storage.set('UID', data.results.userId)
 
-              jmapi.users(data.results.userId)
+              // jmapi.users(data.results.userId)
 
               var results = []
               var errs = []
