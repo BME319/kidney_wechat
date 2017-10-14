@@ -1197,7 +1197,7 @@ angular.module('zy.controllers', ['ionic', 'kidney.services'])
 
   $scope.choosePhotos = function () {
     var config = ''
-    var path = $location.absUrl().split('#')[0]
+    var path = $location.absUrl().split('?')[0]
     // var path = "http://doctor.haihonghospitalmanagement.com/?code=" + Storage.get('code');
     Mywechat.settingConfig({url: path}).then(function (data) {
       // alert(data.results.timestamp)
@@ -1264,7 +1264,7 @@ angular.module('zy.controllers', ['ionic', 'kidney.services'])
   $scope.isShow = true
   $scope.takePicture = function () {
     var config = ''
-    var path = $location.absUrl().split('#')[0]
+    var path = $location.absUrl().split('?')[0]
     Mywechat.settingConfig({url: path}).then(function (data) {
         // alert(data.results.timestamp)
       config = data.results
@@ -2712,7 +2712,7 @@ angular.module('zy.controllers', ['ionic', 'kidney.services'])
 
   $scope.choosePhotos = function () {
     var config = ''
-    var path = $location.absUrl().split('#')[0]
+    var path = $location.absUrl().split('?')[0]
     Mywechat.settingConfig({url: path}).then(function (data) {
           // alert(data.results.timestamp)
       config = data.results
@@ -2777,7 +2777,7 @@ angular.module('zy.controllers', ['ionic', 'kidney.services'])
 
   $scope.takePicture = function () {
     var config = ''
-    var path = $location.absUrl().split('#')[0]
+    var path = $location.absUrl().split('?')[0]
     Mywechat.settingConfig({url: path}).then(function (data) {
         // alert(data.results.timestamp)
       config = data.results
@@ -3181,7 +3181,7 @@ angular.module('zy.controllers', ['ionic', 'kidney.services'])
 
   $scope.choosePhotos = function () {
     var config = ''
-    var path = $location.absUrl().split('#')[0]
+    var path = $location.absUrl().split('?')[0]
     Mywechat.settingConfig({url: path}).then(function (data) {
       // alert(data.results.timestamp)
       config = data.results
@@ -3246,7 +3246,7 @@ angular.module('zy.controllers', ['ionic', 'kidney.services'])
 
   $scope.takePicture = function () {
     var config = ''
-    var path = $location.absUrl().split('#')[0]
+    var path = $location.absUrl().split('?')[0]
     Mywechat.settingConfig({url: path}).then(function (data) {
         // alert(data.results.timestamp)
       config = data.results
@@ -3685,26 +3685,26 @@ angular.module('zy.controllers', ['ionic', 'kidney.services'])
    * @DateTime 2017-07-05
    */
   $scope.logout = function () {
-  User.logOut({}).then(function (data) {
-    socket.emit('disconnect')
+    User.logOut({}).then(function (data) {
+      socket.emit('disconnect')
     // Storage.set('IsSignIn','NO');
-    $state.logStatus = '用户已注销'
+      $state.logStatus = '用户已注销'
     // 清除登陆信息
-    Storage.rm('password')
+      Storage.rm('password')
     // Storage.rm('UID');
-    Storage.rm('doctorunionid')
-    Storage.rm('IsSignIn')
+      Storage.rm('doctorunionid')
+      Storage.rm('IsSignIn')
     // Storage.rm('USERNAME');
-    Storage.rm('PASSWORD')
-    Storage.rm('userid')
-    console.log($state)
-    mySocket.cancelAll()
-    socket.emit('disconnect')
-    socket.disconnect()
+      Storage.rm('PASSWORD')
+      Storage.rm('userid')
+      console.log($state)
+      mySocket.cancelAll()
+      socket.emit('disconnect')
+      socket.disconnect()
     // $scope.navigation_login = $sce.trustAsResourceUrl('http://proxy.haihonghospitalmanagement.com/member.php?mod=logging&action=logout&formhash=xxxxxx')
-    $timeout(function () { $state.go('signin') }, 500)
-  }, function (err) {
-    console.log(err)
+      $timeout(function () { $state.go('signin') }, 500)
+    }, function (err) {
+      console.log(err)
     })
   }
 }])
@@ -5824,6 +5824,7 @@ angular.module('zy.controllers', ['ionic', 'kidney.services'])
       MassCommunication.massToPatient(msg).then(function (data) {
         console.log(data)
         $ionicLoading.show({ template: '发送成功！', duration: 1000 })
+        document.getElementById('123').value = ''
       }, function (err) {
         console.error(err)
         $ionicLoading.show({ template: '发送失败！', duration: 1000 })
@@ -6303,9 +6304,8 @@ angular.module('zy.controllers', ['ionic', 'kidney.services'])
  //  }
 
   var photo_upload_display = function (serverId) {
-    
     var temp_photoaddress = Storage.get('UID') + '_' + new Date().getTime() + 'post.jpg'
-      
+
     Mywechat.download({serverId: serverId, name: temp_photoaddress})
     .then(function (res) {
       // res.path_resized
@@ -6369,7 +6369,7 @@ angular.module('zy.controllers', ['ionic', 'kidney.services'])
 
   $scope.choosePhotos = function () {
     var config = ''
-    var path = $location.absUrl().split('#')[0]
+    var path = $location.absUrl().split('?')[0]
     Mywechat.settingConfig({url: path}).then(function (data) {
           // alert(data.results.timestamp)
       config = data.results
@@ -6434,7 +6434,7 @@ angular.module('zy.controllers', ['ionic', 'kidney.services'])
 
   $scope.takePicture = function () {
     var config = ''
-    var path = $location.absUrl().split('#')[0]
+    var path = $location.absUrl().split('?')[0]
     Mywechat.settingConfig({url: path}).then(function (data) {
         // alert(data.results.timestamp)
       config = data.results
