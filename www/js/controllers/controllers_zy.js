@@ -7020,9 +7020,9 @@ angular.module('zy.controllers', ['ionic', 'kidney.services'])
                 ]
               })
             } else {
-              User.setUnionId({phoneNo: Verify.Phone, openId: Storage.get('openid')}).then(function (data) {
+              User.setOpenId({phoneNo: Verify.Phone, openId: Storage.get('openid')}).then(function (data) {
                 if (data.results == 'success!') {
-                  User.setOpenId({type: 1, userId: tempuserId, openId: Storage.get('messageopenid')}).then(function (res) {
+                  User.setMessageOpenId({type: 1, userId: tempuserId, openId: Storage.get('messageopenid')}).then(function (res) {
                     console.log('setopenid')
                     $scope.logStatus = '微信绑定手机账号成功，即将返回登录页面'
                     $timeout($state.go('signin'), 2000)
