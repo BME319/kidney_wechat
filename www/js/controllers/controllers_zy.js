@@ -5824,6 +5824,7 @@ angular.module('zy.controllers', ['ionic', 'kidney.services'])
       MassCommunication.massToPatient(msg).then(function (data) {
         console.log(data)
         $ionicLoading.show({ template: '发送成功！', duration: 1000 })
+        document.getElementById('123').value = ''
       }, function (err) {
         console.error(err)
         $ionicLoading.show({ template: '发送失败！', duration: 1000 })
