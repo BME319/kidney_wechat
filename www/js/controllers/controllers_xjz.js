@@ -582,7 +582,7 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
  * @DateTime 2017-07-05
  */
 .controller('detailCtrl', ['$ionicPlatform', '$scope', '$state', '$rootScope', '$ionicModal', '$ionicScrollDelegate', '$ionicHistory', '$ionicPopover', '$ionicPopup', 'Camera', 'voice', '$http', 'CONFIG', 'arrTool', 'Communication', 'Counsel', 'Storage', 'Doctor', 'Patient2', '$q', 'New', 'Mywechat', 'Account', 'socket', 'notify', '$timeout', '$ionicLoading', function ($ionicPlatform, $scope, $state, $rootScope, $ionicModal, $ionicScrollDelegate, $ionicHistory, $ionicPopover, $ionicPopup, Camera, voice, $http, CONFIG, arrTool, Communication, Counsel, Storage, Doctor, Patient2, $q, New, Mywechat, Account, socket, notify, $timeout, $ionicLoading) {
-  // if ($ionicPlatform.is('ios')) cordova.plugins.Keyboard.disableScroll(true)
+  if ($ionicPlatform.is('ios')) cordova.plugins.Keyboard.disableScroll(true)
 
   $scope.input = {
     text: ''
@@ -716,6 +716,22 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
             }, function (err) {
               console.log(err)
             })
+    Mywechat.settingConfig({ url: path }).then(function (data) {
+      config = data.results
+      config.jsApiList = ['startRecord', 'stopRecord', 'playVoice', 'chooseImage', 'uploadVoice', 'uploadImage']
+      wx.config({
+        debug: false,
+        appId: config.appId,
+        timestamp: config.timestamp,
+        nonceStr: config.nonceStr,
+        signature: config.signature,
+        jsApiList: config.jsApiList
+      })
+      wx.error(function (res) {
+        console.error(res)
+        alert(res.errMsg)
+      })
+    })
     imgModalInit()
     $scope.getMsg(15).then(function (data) {
       $scope.msgs = data
@@ -899,7 +915,7 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
         counseltype: $scope.params.counseltype
       }
       var msgJson = {
-        clientType: 'doctor',
+        clientType: 'wechatdoctor',
         contentType: 'custom',
         fromID: $scope.params.UID,
         fromName: '',
@@ -1254,7 +1270,7 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
             endlMsg.counseltype = 6
           }
           var msgJson = {
-            clientType: 'doctor',
+            clientType: 'wechatdoctor',
             contentType: 'custom',
             fromID: thisDoctor.userId,
             fromName: thisDoctor.name,
@@ -1311,6 +1327,7 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
    */
   $scope.updateMsg = function (msg, pos) {
     console.info('updateMsg')
+    if (msg.contentType == 'image') msg.content.thumb = CONFIG.mediaUrl + msg.content['src_thumb']
     if (pos == 0) {
       msg.diff = true
     } else if (msg.hasOwnProperty('time')) {
@@ -1396,16 +1413,19 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
       }
     } else if (type == 'image') {
       data = {
-        src: content[0],
-        src_thumb: content[1]
+        mediaId: content[0],
+        mediaId_thumb: content[1],
+        src: '',
+        src_thumb: ''
       }
     } else if (type == 'voice') {
       data = {
-        src: content
+        mediaId: content,
+        src: ''
       }
     }
     var msgJson = {
-      clientType: 'doctor',
+      clientType: 'wechatdoctor',
       contentType: type,
       fromID: $scope.params.UID,
       fromName: thisDoctor.name,
@@ -1443,7 +1463,7 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
       d.src = msg.content.src
     }
     return {
-      clientType: 'doctor',
+      clientType: 'wechatdoctor',
       contentType: type,
       fromID: msg.fromID,
       fromName: msg.fromName,
@@ -1526,30 +1546,55 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
  * @param    {[type]}
  * @return   {[type]}
  */
+  // $scope.getImage = function (type) {
+  //   $scope.showMore = false
+  //   Camera.getPicture(type, true)
+  //           .then(function (url) {
+  //             console.log(url)
+  //             var fm = md5(Date.now(), $scope.params.chatId) + '.jpg',
+  //               d = [
+  //                 'uploads/photos/' + fm,
+  //                 'uploads/photos/resized' + fm
+  //               ],
+  //               imgMsg = msgGen(d, 'image'),
+  //               localMsg = localMsgGen(imgMsg, url)
+  //             $scope.pushMsg(localMsg)
+  //             Camera.uploadPicture(url, fm)
+  //                   .then(function () {
+  //                     socket.emit('message', {msg: imgMsg, to: $scope.params.chatId, role: 'doctor'})
+  //                   }, function () {
+  //                     $ionicLoading.show({ template: '图片上传失败', duration: 2000 })
+  //                   })
+  //           }, function (err) {
+  //               // console.error(err);
+  //           })
+  // }
   $scope.getImage = function (type) {
     $scope.showMore = false
-    Camera.getPicture(type, true)
-            .then(function (url) {
-              console.log(url)
-              var fm = md5(Date.now(), $scope.params.chatId) + '.jpg',
-                d = [
-                  'uploads/photos/' + fm,
-                  'uploads/photos/resized' + fm
-                ],
-                imgMsg = msgGen(d, 'image'),
-                localMsg = localMsgGen(imgMsg, url)
-              $scope.pushMsg(localMsg)
-              Camera.uploadPicture(url, fm)
-                    .then(function () {
-                      socket.emit('message', {msg: imgMsg, to: $scope.params.chatId, role: 'doctor'})
-                    }, function () {
-                      $ionicLoading.show({ template: '图片上传失败', duration: 2000 })
-                    })
-            }, function (err) {
-                // console.error(err);
-            })
+    var ids = ['', '']
+    if (type == 'cam') var st = ['camera']
+    else var st = ['album']
+    wx.chooseImage({
+      count: 1, // 默认9
+      sizeType: ['original', 'compressed'], // 可以指定是原图还是压缩图，默认二者都有
+      sourceType: st, // 可以指定来源是相册还是相机，默认二者都有
+      success: function (response) {
+        console.log(response)
+        ids = ids.concat(response.localIds)
+        wx.uploadImage({
+          localId: response.localIds[0], // 需要上传的图片的本地ID，由chooseImage接口获得
+          isShowProgressTips: 0, // 默认为1，显示进度提示
+          success: function (res) {
+            console.log(res)
+            ids[0] = res.serverId // 返回图片的服务器端ID
+                        // if(cnt)
+            sendmsg(ids, 'image')
+                        // else cnt++;
+          }
+        })
+      }
+    })
   }
-
   /**
    * 上传的语音
    * @Author   xjz
@@ -1583,6 +1628,7 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
             })
     $scope.params.recording = true
   }
+
   /**
    * 停止录音
    * @Author   xjz
@@ -1857,7 +1903,7 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
  * @DateTime 2017-07-05
  */
 .controller('GroupChatCtrl', ['$ionicPlatform', '$scope', '$state', '$ionicHistory', '$http', '$ionicModal', '$ionicScrollDelegate', '$rootScope', '$stateParams', '$ionicPopover', '$ionicLoading', '$ionicPopup', 'Camera', 'voice', 'Communication', 'Storage', 'Doctor', '$q', 'CONFIG', 'arrTool', 'New', 'socket', 'notify', '$timeout', function ($ionicPlatform, $scope, $state, $ionicHistory, $http, $ionicModal, $ionicScrollDelegate, $rootScope, $stateParams, $ionicPopover, $ionicLoading, $ionicPopup, Camera, voice, Communication, Storage, Doctor, $q, CONFIG, arrTool, New, socket, notify, $timeout) {
-  // if ($ionicPlatform.is('ios'))cordova.plugins.Keyboard.disableScroll(true)
+  if ($ionicPlatform.is('ios'))cordova.plugins.Keyboard.disableScroll(true)
 
   // $scope.itemStyle = {'position': 'absolute', 'top': '44px', 'width': '100%', 'margin': '0', 'min-height': '35vh', 'max-height': '55vh', 'overflow-y': 'scroll'}
   // if (ionic.Platform.isIOS()) {
@@ -2323,7 +2369,7 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
       }
     }
     var msgJson = {
-      clientType: 'doctor',
+      clientType: 'wechatdoctor',
       contentType: type,
       fromID: $scope.params.UID,
       fromName: thisDoctor.name,
@@ -2355,7 +2401,7 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
       d.src = msg.content.src
     }
     return {
-      clientType: 'doctor',
+      clientType: 'wechatdoctor',
       contentType: type,
       fromID: msg.fromID,
       fromName: msg.fromName,
@@ -2505,7 +2551,7 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
                       var DID = res.results.doctorId.userId,
                         PID = res.results.patientId.userId
                       var msgJson = {
-                        clientType: 'doctor',
+                        clientType: 'wechatdoctor',
                         contentType: 'text',
                         fromID: DID,
                         fromName: res.results.doctorId.name,
@@ -2624,7 +2670,7 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
                                       endlMsg.counseltype = 6
                                     }
                                     var endJson = {
-                                      clientType: 'doctor',
+                                      clientType: 'wechatdoctor',
                                       contentType: 'custom',
                                       fromID: DID,
                                       fromName: res.results.doctorId.name,
@@ -2734,7 +2780,7 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
         msgdata.fromId = Storage.get('UID')
         msgdata.targetId = doc.userId
         var msgJson = {
-          clientType: 'doctor',
+          clientType: 'wechatdoctor',
           contentType: 'custom',
           fromID: thisDoctor.userId,
           fromName: thisDoctor.name,
@@ -2845,7 +2891,7 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
         msgdata.targetId = team.teamId
         msgdata.fromId = thisDoctor.userId
         var msgJson = {
-          clientType: 'doctor',
+          clientType: 'wechatdoctor',
           contentType: 'custom',
           fromID: thisDoctor.userId,
           fromName: thisDoctor.name,
@@ -3096,7 +3142,7 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
                       var DID = res.results.doctorId.userId,
                         PID = res.results.patientId.userId
                       var msgJson = {
-                        clientType: 'doctor',
+                        clientType: 'wechatdoctor',
                         contentType: 'text',
                         concluderID: Storage.get('UID'),
                         concluderName: $scope.myname,
@@ -3219,7 +3265,7 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
                                       endlMsg.counseltype = 6
                                     }
                                     var endJson = {
-                                      clientType: 'doctor',
+                                      clientType: 'wechatdoctor',
                                       contentType: 'custom',
                                       fromID: DID,
                                       fromName: res.results.doctorId.name,
