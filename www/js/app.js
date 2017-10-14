@@ -283,7 +283,7 @@ angular.module('kidney', [
       console.log(data)
             // $rootScope.$broadcast('im:getMsg',data);
       if (!appState.background && (($rootScope.conversation.type == 'single' && $rootScope.conversation.id == data.msg.fromID) || ($rootScope.conversation.type == 'group' && $rootScope.conversation.id == data.msg.targetID))) return
-      notify.add(data.msg)
+      // notify.add(data.msg)
       socket.emit('gotMsg', {msg: data.msg, userId: Storage.get('UID')})
     }
 

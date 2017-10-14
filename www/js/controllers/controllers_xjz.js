@@ -619,6 +619,12 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
     if (!delay) delay = 100
     $timeout(function () {
       $scope.scrollHandle.scrollBottom(animate)
+      $timeout(function () {
+        $scope.scrollHandle.resize()
+      }, 500)
+      $timeout(function () {
+        $scope.scrollHandle.resize()
+      }, 1000)
     }, delay)
   }
     // render msgs
@@ -1329,6 +1335,7 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
   $scope.updateMsg = function (msg, pos) {
     console.info('updateMsg')
     if (msg.contentType == 'image') msg.content.thumb = CONFIG.mediaUrl + msg.content['src_thumb']
+    msg.direct = $scope.msgs[pos].direct
     if (pos == 0) {
       msg.diff = true
     } else if (msg.hasOwnProperty('time')) {
@@ -1342,9 +1349,6 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
         msg.diff = false
       }
     }
-
-    msg.content.src = $scope.msgs[pos].content.src
-    msg.direct = $scope.msgs[pos].direct
     $scope.msgs[pos] = msg
   }
   /**
@@ -1370,7 +1374,7 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
         }
       }
     }
-        // msg.direct = msg.fromID==$scope.params.UID?'send':'receive';
+    msg.direct = msg.fromID == $scope.params.UID ? 'send' : 'receive'
     $scope.params.msgCount++
     $scope.msgs.push(msg)
     toBottom(true, 200)
@@ -2333,13 +2337,12 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
   $scope.updateMsg = function (msg, pos) {
     console.info('updateMsg')
     if (msg.contentType == 'image') msg.content.thumb = CONFIG.mediaUrl + msg.content['src_thumb']
+    msg.direct = msg.fromID == $scope.params.UID ? 'send' : 'receive'
     if (pos == 0) {
       msg.diff = true
     } else if (msg.hasOwnProperty('time') && $scope.msgs[pos - 1].hasOwnProperty('time')) {
       msg.diff = (msg.time - $scope.msgs[pos - 1].time) > 300000
     }
-    msg.content.src = $scope.msgs[pos].content.src
-    msg.direct = $scope.msgs[pos].direct
     $scope.msgs[pos] = msg
   }
   $scope.pushMsg = function (msg) {
