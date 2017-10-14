@@ -2530,7 +2530,7 @@ angular.module('kidney.services', ['ionic', 'ngResource'])
   function newUserOnce (userId, name) {
     if (userId == '') return
     var n = name || ''
-    socket.emit('newUser', { user_name: n, user_id: userId, client: 'doctor'})
+    socket.emit('newUser', { user_name: n, user_id: userId, client: 'wechatdoctor'})
   }
   return {
     newUser: function (userId, name) {
