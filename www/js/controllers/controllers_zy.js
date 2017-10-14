@@ -6969,7 +6969,7 @@ angular.module('zy.controllers', ['ionic', 'kidney.services'])
       return
     }
 
-    User.getUserID({username: $scope.Verify.Phone}).then(function (data) {
+    User.getUserId({username: $scope.Verify.Phone}).then(function (data) {
       if (data.results == 0) {
         tempuserId = data.UserId
         if (data.roles.indexOf('doctor') == -1) {
