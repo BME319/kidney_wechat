@@ -165,18 +165,18 @@ angular.module('kidney', [
                     if (results.results.agreement == '0') {
                       if (results.results.photoUrl == undefined || results[b].results.photoUrl == '') {
                         Doctor.editDoctorDetail({userId: Storage.get('UID'), photoUrl: wechatData.headimgurl}).then(function (r) {
-                          $state.go('tab.home')
+                          $state.go('tab.workplace')
                         }, function (err) {
-                          $state.go('tab.home')
+                          $state.go('tab.workplace')
                         })
                       } else {
-                        $state.go('tab.home')
+                        $state.go('tab.workplace')
                       }
                     } else {
                       $state.go('agreement', {last: 'signin'})
                     }
                   } else {
-                    $state.go('tab.home')
+                    $state.go('tab.workplace')
                   }
                   // if (results[a].results.agreement == '0') {
                   //   if (results[b].results != null) {
