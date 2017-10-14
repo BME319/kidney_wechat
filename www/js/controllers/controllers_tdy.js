@@ -1938,7 +1938,7 @@ angular.module('tdy.controllers', ['ionic','kidney.services','ionic-datepicker']
 
   $scope.choosePhotos = function () {
     var config = ''
-    var path = $location.absUrl().split('#')[0]
+    var path = $location.absUrl().split('?')[0]
     // var path = "http://doctor.haihonghospitalmanagement.com/?code=" + Storage.get('code');
     Mywechat.settingConfig({url: path}).then(function (data) {
       // alert(data.results.timestamp)
@@ -2005,7 +2005,7 @@ angular.module('tdy.controllers', ['ionic','kidney.services','ionic-datepicker']
 
   $scope.takePicture = function () {
     var config = ''
-    var path = $location.absUrl().split('#')[0]
+    var path = $location.absUrl().split('?')[0]
     Mywechat.settingConfig({url: path}).then(function (data) {
         // alert(data.results.timestamp)
       config = data.results

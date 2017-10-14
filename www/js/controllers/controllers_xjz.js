@@ -124,7 +124,7 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
 
   $scope.QRscan = function () {
     var config = ''
-    var path = $location.absUrl().split('#')[0]
+    var path = $location.absUrl().split('?')[0]
     Mywechat.settingConfig({url: path}).then(function (data) {
       config = data.results
       config.jsApiList = ['scanQRCode']
@@ -158,7 +158,6 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
 
     })
   }
-
 }])
 /**
  * 查找医生
