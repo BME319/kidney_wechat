@@ -22,28 +22,28 @@ angular.module('kidney', [
 
 .run(['version', '$ionicPlatform', '$state', 'Storage', '$rootScope', 'CONFIG', 'Communication', 'notify', '$interval', 'socket', 'mySocket', '$ionicPopup', 'session', '$location', '$ionicHistory', 'Mywechat', 'User', 'Doctor', '$ionicPopup', '$q', function (version, $ionicPlatform, $state, Storage, $rootScope, CONFIG, Communication, notify, $interval, socket, mySocket, $ionicPopup, session, $location, $ionicHistory, Mywechat, User, Doctor, $ionicPopup, $q) {
   // 虚拟返回键显示退出提示框
-  $ionicPlatform.registerBackButtonAction(function (e) {
-    e.preventDefault()
+  // $ionicPlatform.registerBackButtonAction(function (e) {
+  //   e.preventDefault()
 
-    function showConfirm () {
-      var confirmPopup = $ionicPopup.confirm({
-        title: '<strong>退出应用?</strong>',
-        template: '你确定要退出应用吗?',
-        okText: '退出',
-        cancelText: '取消'
-      })
+  //   function showConfirm () {
+  //     var confirmPopup = $ionicPopup.confirm({
+  //       title: '<strong>退出应用?</strong>',
+  //       template: '你确定要退出应用吗?',
+  //       okText: '退出',
+  //       cancelText: '取消'
+  //     })
 
-      confirmPopup.then(function (res) {
-        if (res) {
-          ionic.Platform.exitApp()
-        } else {
-          // Don't close
-        }
-      })
-    }
-    showConfirm()
-    return false
-  }, 101)
+  //     confirmPopup.then(function (res) {
+  //       if (res) {
+  //         ionic.Platform.exitApp()
+  //       } else {
+  //         // Don't close
+  //       }
+  //     })
+  //   }
+  //   showConfirm()
+  //   return false
+  // }, 101)
 
   $ionicPlatform.ready(function () {
     // version.checkUpdate($rootScope)// 在app.js的ready里加
