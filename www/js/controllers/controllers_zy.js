@@ -1,6 +1,6 @@
 angular.module('zy.controllers', ['ionic', 'kidney.services'])
 // 登录-zy,zxf
-.controller('SignInCtrl', ['$ionicLoading', 'User', '$scope', '$timeout', '$state', 'Storage', 'loginFactory', '$ionicHistory', '$sce', 'Doctor', 'Patient', '$rootScope', 'notify', '$interval', 'socket', 'Mywechat', 'mySocket', function ($ionicLoading, User, $scope, $timeout, $state, Storage, loginFactory, $ionicHistory, $sce, Doctor, Patient, $rootScope, notify, $interval, socket, Mywechat, mySocket) {
+.controller('SignInCtrl', ['$ionicLoading', 'User', '$scope', '$timeout', '$state', 'Storage', 'loginFactory', '$ionicHistory', '$sce', 'Doctor', 'Patient', '$rootScope', 'notify', '$interval', 'socket', 'Mywechat', 'mySocket', '$ionicPopup', function ($ionicLoading, User, $scope, $timeout, $state, Storage, loginFactory, $ionicHistory, $sce, Doctor, Patient, $rootScope, notify, $interval, socket, Mywechat, mySocket, $ionicPopup) {
   $scope.barwidth = 'width:0%'
   // $scope.navigation_login = $sce.trustAsResourceUrl('http://proxy.haihonghospitalmanagement.com/member.php?mod=logging&action=logout&formhash=xxxxxx')
   if (Storage.get('USERNAME') != null && Storage.get('USERNAME') != undefined) {
@@ -178,6 +178,25 @@ angular.module('zy.controllers', ['ionic', 'kidney.services'])
     $state.go('phonevalid')
   }
 
+  $scope.bingdwechat = function () {
+    $ionicPopup.show({
+      title: '将您的微信账号与手机账号进行绑定，绑定后在公众号内可以自动登录',
+      buttons: [
+        {
+          text: '取消',
+          type: 'button'
+        },
+        {
+          text: '確定',
+          type: 'button-positive',
+          onTap: function (e) {
+            Storage.set('validMode', 0)
+            $state.go('phonevalid', {last: 'wechat'})
+          }
+        }
+      ]
+    })
+  }
     // if(Storage.get('doctorunionid')!=undefined&&Storage.get('bindingsucc')=='yes'){
     //     User.logIn({username:Storage.get('doctorunionid'),password:"112233",role:"doctor"}).then(function(data){
     //       if(data.results.mesg=="login success!"){
