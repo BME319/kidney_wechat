@@ -619,6 +619,12 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
     if (!delay) delay = 100
     $timeout(function () {
       $scope.scrollHandle.scrollBottom(animate)
+      $timeout(function () {
+        $scope.scrollHandle.resize()
+      }, 500)
+      $timeout(function () {
+        $scope.scrollHandle.resize()
+      }, 1000)
     }, delay)
   }
     // render msgs
