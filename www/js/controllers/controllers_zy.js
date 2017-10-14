@@ -178,7 +178,7 @@ angular.module('zy.controllers', ['ionic', 'kidney.services'])
     $state.go('phonevalid')
   }
 
-  $scope.bingdwechat = function () {
+  $scope.bindwechat = function () {
     $ionicPopup.show({
       title: '将您的微信账号与手机账号进行绑定，绑定后在公众号内可以自动登录',
       buttons: [
@@ -190,8 +190,7 @@ angular.module('zy.controllers', ['ionic', 'kidney.services'])
           text: '確定',
           type: 'button-positive',
           onTap: function (e) {
-            Storage.set('validMode', 0)
-            $state.go('phonevalid', {last: 'wechat'})
+            $state.go('bindwechat')
           }
         }
       ]

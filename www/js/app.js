@@ -469,6 +469,13 @@ angular.module('kidney', [
       controller: 'phonevalidCtrl',
       params: {last: null}
     })
+    // 绑定微信
+    .state('bindwechat', {
+      cache: false,
+      url: '/bindwechat',
+      templateUrl: 'partials/others/bindwechat.html',
+      controller: 'bindwechatCtrl'
+    })
     .state('setpassword', {
       cache: false,
       url: '/setpassword',
