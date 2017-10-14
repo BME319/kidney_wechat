@@ -49,7 +49,7 @@ angular.module('kidney', [
     // version.checkUpdate($rootScope)// 在app.js的ready里加
     // 记录message当前会话
     // $rootScope.isIOS = $ionicPlatform.is('ios')
-
+    debugger
     var temp = $location.absUrl().split('=')
     var code = ''
     var state = ''
@@ -136,11 +136,11 @@ angular.module('kidney', [
                 if (params[1] == '13') { $state.go('tab.group-chat', {type: params[2], groupId: params[3], teamId: params[4]}) } else { $state.go('tab.detail', {type: params[2], chatId: params[3], counselId: params[4]}) }
               } else {
                 $q.all([
-                  User.getAgree({userId: data.results.userId}).then(function (res) {
-                    results.push(res)
-                  }, function (err) {
-                    errs.push(err)
-                  }),
+                  // User.getAgree({userId: data.results.userId}).then(function (res) {
+                  //   results.push(res)
+                  // }, function (err) {
+                  //   errs.push(err)
+                  // }),
                   User.setMessageOpenId({type: 1, userId: Storage.get('UID'), openId: Storage.get('messageopenid')}).then(function (res) {
                                             // results.push(res)
                   }, function (err) {
@@ -153,17 +153,17 @@ angular.module('kidney', [
                   })
                 ]).then(function () {
                   console.log(results)
-                  var a, b
-                  for (var i in results) {
-                    if (results[i].results.agreement != undefined) {
-                      a = i
-                    } else {
-                      b = i
-                    }
-                  }
-                  if (results[a].results.agreement == '0') {
-                    if (results[b].results != null) {
-                      if (results[b].results.photoUrl == undefined || results[b].results.photoUrl == '') {
+                  // var a, b
+                  // for (var i in results) {
+                  //   if (results[i].results.agreement != undefined) {
+                  //     a = i
+                  //   } else {
+                  //     b = i
+                  //   }
+                  // }
+                  if (results.results) {
+                    if (results.results.agreement == '0') {
+                      if (results.results.photoUrl == undefined || results[b].results.photoUrl == '') {
                         Doctor.editDoctorDetail({userId: Storage.get('UID'), photoUrl: wechatData.headimgurl}).then(function (r) {
                           $state.go('tab.home')
                         }, function (err) {
@@ -173,11 +173,28 @@ angular.module('kidney', [
                         $state.go('tab.home')
                       }
                     } else {
-                      $state.go('tab.home')
+                      $state.go('agreement', {last: 'signin'})
                     }
                   } else {
-                    $state.go('agreement', {last: 'signin'})
+                    $state.go('tab.home')
                   }
+                  // if (results[a].results.agreement == '0') {
+                  //   if (results[b].results != null) {
+                  //     if (results[b].results.photoUrl == undefined || results[b].results.photoUrl == '') {
+                  //       Doctor.editDoctorDetail({userId: Storage.get('UID'), photoUrl: wechatData.headimgurl}).then(function (r) {
+                  //         $state.go('tab.home')
+                  //       }, function (err) {
+                  //         $state.go('tab.home')
+                  //       })
+                  //     } else {
+                  //       $state.go('tab.home')
+                  //     }
+                  //   } else {
+                  //     $state.go('tab.home')
+                  //   }
+                  // } else {
+                  //   $state.go('agreement', {last: 'signin'})
+                  // }
                 })
               }
             } else {
