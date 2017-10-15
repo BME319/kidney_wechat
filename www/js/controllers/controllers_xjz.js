@@ -616,7 +616,7 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
    * @return   {null}
    */
   function toBottom (animate, delay) {
-    if (!delay) delay = 200
+    if (!delay) delay = 100
     $timeout(function () {
       $scope.scrollHandle.scrollBottom(animate)
       $timeout(function () {
@@ -749,7 +749,7 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
 
   $scope.$on('keyboardshow', function (event, height) {
     $scope.params.helpDivHeight = height
-    toBottom(true, 500)
+    toBottom(true, 100)
   })
   $scope.$on('keyboardhide', function (event) {
     $scope.params.helpDivHeight = 0
@@ -1030,7 +1030,7 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
     $scope.showVoice = false
     $scope.showMore = false
     $scope.scrollHandle.scrollBottom(true)
-    toBottom(true)
+    toBottom(true, 500)
   }
     // 长按工具条
   var options = [{
@@ -1351,8 +1351,7 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
       }
     }
     $scope.msgs[pos] = msg
-    toBottom(true, 200)
-    toBottom(true, 600)
+    // toBottom(true, 1000)
   }
   /**
    * 消息加入队列
@@ -1499,7 +1498,7 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
     console.info('[socket.connected]', socket.connected)
     socket.emit('message', {msg: msgJson, to: $scope.params.chatId, role: 'doctor'})
     $scope.pushMsg(msgJson)
-    toBottom(true)
+    // toBottom(true, 500)
   }
   /**
    * 点击输入框提交按钮
@@ -1946,15 +1945,15 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
 
   $scope.scrollHandle = $ionicScrollDelegate.$getByHandle('myContentScroll')
   function toBottom (animate, delay) {
-    if (!delay) delay = 200
+    if (!delay) delay = 100
     setTimeout(function () {
       $scope.scrollHandle.scrollBottom(animate)
-      // $timeout(function () {
-      //   $scope.scrollHandle.resize()
-      // }, 500)
-      // $timeout(function () {
-      //   $scope.scrollHandle.resize()
-      // }, 1000)
+      $timeout(function () {
+        $scope.scrollHandle.resize()
+      }, 500)
+      $timeout(function () {
+        $scope.scrollHandle.resize()
+      }, 1000)
     }, delay)
   }
   $scope.$on('$ionicView.beforeEnter', function () {
@@ -2048,7 +2047,7 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
   $scope.$on('keyboardshow', function (event, height) {
     console.log('键盘弹出')
     $scope.params.helpDivHeight = height
-    toBottom(true, 500)
+    toBottom(true, 100)
   })
   $scope.$on('keyboardhide', function (event) {
     $scope.params.helpDivHeight = 0
@@ -2356,7 +2355,7 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
       msg.diff = (msg.time - $scope.msgs[pos - 1].time) > 300000
     }
     $scope.msgs[pos] = msg
-    toBottom(true, 1000)
+    // toBottom(true, 1000)
   }
   $scope.pushMsg = function (msg) {
     console.info('pushMsg')
@@ -2373,8 +2372,8 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
     }
     $scope.params.msgCount++
     $scope.msgs.push(msg)
-    toBottom(true, 500)
-    toBottom(true, 1000)
+    toBottom(true, 200)
+    toBottom(true, 600)
     // var waittime = msg.contentType === 'image' ? 10000 : 5000
     $timeout(function () {
       var pos = arrTool.indexOf($scope.msgs, 'createTimeInMillis', msg.createTimeInMillis)
@@ -2462,7 +2461,7 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
     console.info('[socket.connected]', socket.connected)
     socket.emit('message', {msg: msgJson, to: $scope.params.groupId, role: 'doctor'})
     $scope.pushMsg(msgJson)
-    toBottom(true, 500)
+    // toBottom(true, 500)
   }
 
   $scope.submitMsg = function () {
@@ -3364,7 +3363,7 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
     $scope.showVoice = false
     $scope.showMore = false
     $scope.scrollHandle.scrollBottom(true)
-    toBottom(true)
+    toBottom(true, 500)
   }
 
     // view image
