@@ -1949,12 +1949,12 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
     if (!delay) delay = 200
     setTimeout(function () {
       $scope.scrollHandle.scrollBottom(animate)
-      $timeout(function () {
-        $scope.scrollHandle.resize()
-      }, 500)
-      $timeout(function () {
-        $scope.scrollHandle.resize()
-      }, 1000)
+      // $timeout(function () {
+      //   $scope.scrollHandle.resize()
+      // }, 500)
+      // $timeout(function () {
+      //   $scope.scrollHandle.resize()
+      // }, 1000)
     }, delay)
   }
   $scope.$on('$ionicView.beforeEnter', function () {
