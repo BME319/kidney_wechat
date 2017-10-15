@@ -191,6 +191,7 @@ angular.module('kidney.directives', ['kidney.services'])
       elem.bind('focus', function () {
         console.log(this.style)
         this.style.borderBottomColor = '#64DD17'
+        toBottom(true, 1000)
       })
       elem.bind('blur', function () {
         this.style.height = '1px'

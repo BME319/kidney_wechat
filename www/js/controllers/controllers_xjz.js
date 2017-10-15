@@ -2048,7 +2048,7 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
   $scope.$on('keyboardshow', function (event, height) {
     console.log('键盘弹出')
     $scope.params.helpDivHeight = height
-    toBottom(true, 100)
+    toBottom(true, 500)
   })
   $scope.$on('keyboardhide', function (event) {
     $scope.params.helpDivHeight = 0
@@ -2146,7 +2146,7 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
     $scope.showVoice = false
     $scope.showMore = false
     $scope.scrollHandle.scrollBottom(true)
-    toBottom(true)
+    toBottom(true, 500)
   }
 
   $scope.getMsg = function (num) {
@@ -2356,8 +2356,7 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
       msg.diff = (msg.time - $scope.msgs[pos - 1].time) > 300000
     }
     $scope.msgs[pos] = msg
-    toBottom(true, 200)
-    toBottom(true, 600)
+    toBottom(true, 1000)
   }
   $scope.pushMsg = function (msg) {
     console.info('pushMsg')
@@ -2374,8 +2373,8 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
     }
     $scope.params.msgCount++
     $scope.msgs.push(msg)
-    toBottom(true, 200)
-    toBottom(true, 600)
+    toBottom(true, 500)
+    toBottom(true, 1000)
     // var waittime = msg.contentType === 'image' ? 10000 : 5000
     $timeout(function () {
       var pos = arrTool.indexOf($scope.msgs, 'createTimeInMillis', msg.createTimeInMillis)
@@ -2463,7 +2462,7 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
     console.info('[socket.connected]', socket.connected)
     socket.emit('message', {msg: msgJson, to: $scope.params.groupId, role: 'doctor'})
     $scope.pushMsg(msgJson)
-    toBottom(true)
+    toBottom(true, 500)
   }
 
   $scope.submitMsg = function () {
