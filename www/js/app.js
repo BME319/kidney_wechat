@@ -1341,7 +1341,7 @@ angular.module('kidney', [
 .config(['$httpProvider', 'jwtOptionsProvider', function ($httpProvider, jwtOptionsProvider) {
     // 下面的getter可以注入各种服务, service, factory, value, constant, provider等, constant, provider可以直接在.config中注入, 但是前3者不行
   jwtOptionsProvider.config({
-    whiteListedDomains: ['docker2.haihonghospitalmanagement.com', '121.196.221.44', '106.15.185.172', 'testpatient.haihonghospitalmanagement.com', 'testdoctor.haihonghospitalmanagement.com', 'patient.haihonghospitalmanagement.com', 'doctor.haihonghospitalmanagement.com', 'localhost'],
+    whiteListedDomains: ['application.haihonghospitalmanagement.com', '121.196.221.44', '106.15.185.172', 'testpatient.haihonghospitalmanagement.com', 'testdoctor.haihonghospitalmanagement.com', 'patient.haihonghospitalmanagement.com', 'doctor.haihonghospitalmanagement.com', 'localhost'],
     tokenGetter: ['options', 'jwtHelper', '$http', 'CONFIG', 'Storage', '$state', '$ionicPopup', '$interval', function (options, jwtHelper, $http, CONFIG, Storage, $state, $ionicPopup, $interval) {
          // console.log(config);
         // console.log(CONFIG.baseUrl);
