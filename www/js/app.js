@@ -49,7 +49,7 @@ angular.module('kidney', [
     // version.checkUpdate($rootScope)// 在app.js的ready里加
     // 记录message当前会话
     // $rootScope.isIOS = $ionicPlatform.is('ios')
-    debugger
+    //debugger
     var temp = $location.absUrl().split('=')
     var code = ''
     var state = ''
