@@ -6223,7 +6223,15 @@ angular.module('zy.controllers', ['ionic', 'kidney.services'])
       anonymous: $scope.post.anonymous
     }
     console.log('param', param)
-    Forum.newpost(param).then(function (data) {
+    if($scope.post.title == ''){
+       $ionicLoading.show({
+          template: '输入不能为空',
+          noBackdrop: false,
+          duration: 1000,
+          hideOnStateChange: true
+        })
+    }else{
+      Forum.newpost(param).then(function (data) {
       console.log(data)
       if (data.msg == 'success') {
         $ionicLoading.show({
@@ -6244,6 +6252,7 @@ angular.module('zy.controllers', ['ionic', 'kidney.services'])
       })
       console.log(err)
     })
+   }
   }
 
   $scope.onClickCamera = function ($event) {
@@ -6763,7 +6772,15 @@ angular.module('zy.controllers', ['ionic', 'kidney.services'])
       postId: Storage.get('POSTID')
     }
     console.log('param', param)
-    Forum.comment(param).then(function (data) {
+    if($scope.post.content == ''){
+      $ionicLoading.show({
+          template: '输入不能为空',
+          noBackdrop: false,
+          duration: 1000,
+          hideOnStateChange: true
+        })
+    }else{
+        Forum.comment(param).then(function (data) {
       console.log(data)
       if (data.msg == 'success') {
         $ionicLoading.show({
@@ -6783,7 +6800,8 @@ angular.module('zy.controllers', ['ionic', 'kidney.services'])
         hideOnStateChange: true
       })
       console.log(err)
-    })
+    }) 
+   }  
   }
 }])
 
@@ -6808,7 +6826,15 @@ angular.module('zy.controllers', ['ionic', 'kidney.services'])
       at: Storage.get('AT')
     }
     console.log('param', param)
-    Forum.reply(param).then(function (data) {
+    if($scope.reply.content == ''){
+      $ionicLoading.show({
+          template: '输入不能为空',
+          noBackdrop: false,
+          duration: 1000,
+          hideOnStateChange: true
+        })
+    }else{
+      Forum.reply(param).then(function (data) {
       console.log(data)
       if (data.msg == 'success') {
         $ionicLoading.show({
@@ -6828,7 +6854,8 @@ angular.module('zy.controllers', ['ionic', 'kidney.services'])
         hideOnStateChange: true
       })
       console.log(err)
-    })
+    })   
+   }   
   }
 }])
 
