@@ -1649,7 +1649,7 @@ angular.module('zy.controllers', ['ionic', 'kidney.services'])
     angular.forEach($scope.patients, function (value, key) {
       value.show = true
       if (!$scope.filters.item1) {
-        if (value.type == 1) { value.show = false }
+        if (value.type == 1 || value.type == 6 || value.type == 7) { value.show = false }
       }
       if (!$scope.filters.item2) {
         if (value.type == 2 || value.type == 3) { value.show = false }
@@ -1763,7 +1763,7 @@ angular.module('zy.controllers', ['ionic', 'kidney.services'])
     angular.forEach($scope.patients, function (value, key) {
       value.show = true
       if (!$scope.filters.item1) {
-        if (value.type == 1) { value.show = false }
+        if (value.type == 1 || value.type == 6 || value.type == 7) { value.show = false }
       }
       if (!$scope.filters.item2) {
         if (value.type == 2 || value.type == 3) { value.show = false }
