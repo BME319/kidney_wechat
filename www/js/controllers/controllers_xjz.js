@@ -2067,9 +2067,9 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
     console.info('getMsg')
     console.log(data)
     if (data.msg.targetType == 'group' && data.msg.targetID == $state.params.groupId) {
-      // $scope.$apply(function () {
-      insertMsg(data.msg)
-      // })
+      $scope.$apply(function () {
+        insertMsg(data.msg)
+      })
       // New.insertNews({userId: $state.params.groupId, type: $scope.params.newsType, readOrNot: 1, userRole: 'doctor', caseType: $scope.params.teamId})
       New.changeNewsStatus({ sendBy: $state.params.groupId, type: $scope.params.newsType })
     }
@@ -2081,9 +2081,9 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
       var temppos = arrTool.indexOf($scope.msgs, 'createTimeInMillis', data.msg.createTimeInMillis)
       if (!(temppos != -1 && $scope.msgs[temppos].status == 'send_success')) {
         console.log('newMsg')
-        // $scope.$apply(function () {
-        insertMsg(data.msg)
-        // })
+        $scope.$apply(function () {
+          insertMsg(data.msg)
+        })
       }
     }
   })
@@ -2350,18 +2350,18 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
    */
   $scope.updateMsg = function (msg, pos) {
     console.info('updateMsg')
-    console.log(msg.content.thumb)
-    console.log(msg.content['src_thumb'])
-    // if (msg.contentType == 'image') msg.content.thumb = CONFIG.mediaUrl + msg.content['src_thumb']
+    // console.log(msg.content.thumb)
+    // console.log(msg.content['src_thumb'])
+    if (msg.contentType == 'image') msg.content.thumb = CONFIG.mediaUrl + msg.content['src_thumb']
     msg.direct = msg.fromID == $scope.params.UID ? 'send' : 'receive'
     if (pos == 0) {
       msg.diff = true
     } else if (msg.hasOwnProperty('time') && $scope.msgs[pos - 1].hasOwnProperty('time')) {
       msg.diff = (msg.time - $scope.msgs[pos - 1].time) > 300000
     }
-    $scope.$apply(function () {
+    $timeout(function () {
       $scope.msgs[pos] = msg
-    })
+    }, 1000)
 
     // toBottom(true, 1000)
   }
