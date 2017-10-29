@@ -2067,9 +2067,9 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
     console.info('getMsg')
     console.log(data)
     if (data.msg.targetType == 'group' && data.msg.targetID == $state.params.groupId) {
-      $scope.$apply(function () {
-        insertMsg(data.msg)
-      })
+      // $scope.$apply(function () {
+      insertMsg(data.msg)
+      // })
       // New.insertNews({userId: $state.params.groupId, type: $scope.params.newsType, readOrNot: 1, userRole: 'doctor', caseType: $scope.params.teamId})
       New.changeNewsStatus({ sendBy: $state.params.groupId, type: $scope.params.newsType })
     }
@@ -2081,9 +2081,9 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
       var temppos = arrTool.indexOf($scope.msgs, 'createTimeInMillis', data.msg.createTimeInMillis)
       if (!(temppos != -1 && $scope.msgs[temppos].status == 'send_success')) {
         console.log('newMsg')
-        $scope.$apply(function () {
-          insertMsg(data.msg)
-        })
+        // $scope.$apply(function () {
+        insertMsg(data.msg)
+        // })
       }
     }
   })
@@ -2367,6 +2367,7 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
   }
   $scope.pushMsg = function (msg) {
     console.info('pushMsg')
+    console.log(msg)
     var len = $scope.msgs.length
     if (msg.hasOwnProperty('time')) {
       if (len == 0) {
