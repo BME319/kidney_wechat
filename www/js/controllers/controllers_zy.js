@@ -541,7 +541,7 @@ angular.module('zy.controllers', ['ionic', 'kidney.services'])
                       // alert('imageerror'+JSON.stringify(err))
                       console.log(err)
                     })
-                    User.setMessageOpenId({type: 3, openId: Storage.get('messageOpenId'), userId: Storage.get('UID')}).then(function (succ) { // type1医生，2患者
+                    User.setMessageOpenId({type: 1, openId: Storage.get('messageOpenId'), userId: Storage.get('UID')}).then(function (succ) { // type1医生，2患者
                       // console.log(succ)
                     }, function (err) {
                       console.log(err)
@@ -630,7 +630,7 @@ angular.module('zy.controllers', ['ionic', 'kidney.services'])
        */
       User.updateAgree({userId: Storage.get('UID'), agreement: '0', role: 'doctor'}).then(function (data) {
         if (data.results != null) {
-          User.setMessageOpenId({type: 3, openId: Storage.get('messageOpenId'), userId: Storage.get('UID')}).then(function (succ) { // type1doctorWechat，2patientWechat，3doctorApp，4patientApp
+          User.setMessageOpenId({type: 1, openId: Storage.get('messageOpenId'), userId: Storage.get('UID')}).then(function (succ) { // type1doctorWechat，2patientWechat，3doctorApp，4patientApp
             // console.log(succ)
           }, function (err) {
             console.log(err)
@@ -963,7 +963,7 @@ angular.module('zy.controllers', ['ionic', 'kidney.services'])
               // alert('imageerror'+JSON.stringify(err))
               console.log(err)
             })
-            User.setMessageOpenId({type: 3, openId: Storage.get('messageOpenId'), userId: Storage.get('UID')}).then(function (succ) {
+            User.setMessageOpenId({type: 1, openId: Storage.get('messageOpenId'), userId: Storage.get('UID')}).then(function (succ) {
               // console.log(succ)
             }, function (err) {
               console.log(err)
@@ -994,7 +994,7 @@ angular.module('zy.controllers', ['ionic', 'kidney.services'])
 }])
 
 // 上传资质证书-zxf
-.controller('uploadcertificateCtrl', ['CONFIG', 'Dict', 'Doctor', '$scope', '$state', '$timeout', 'Storage', '$ionicPopup', '$ionicLoading', '$ionicPopover', '$ionicScrollDelegate', 'User', 'Camera', '$ionicModal', '$stateParams', 'socket', 'mySocket', function (CONFIG, Dict, Doctor, $scope, $state, $timeout, Storage, $ionicPopup, $ionicLoading, $ionicPopover, $ionicScrollDelegate, User, Camera, $ionicModal, $stateParams, socket, mySocket) {
+.controller('uploadcertificateCtrl', ['CONFIG', 'Dict', 'Doctor', '$scope', '$state', '$timeout', 'Storage', '$ionicPopup', '$ionicLoading', '$ionicPopover', '$ionicScrollDelegate', 'User', 'Camera', '$ionicModal', '$stateParams', 'socket', 'mySocket', 'Mywechat', '$location', function (CONFIG, Dict, Doctor, $scope, $state, $timeout, Storage, $ionicPopup, $ionicLoading, $ionicPopover, $ionicScrollDelegate, User, Camera, $ionicModal, $stateParams, socket, mySocket, Mywechat, $location) {
   $scope.doctor = {}
   User.logIn({username: Storage.get('phoneNumber'), password: Storage.get('password'), role: 'doctor'}).then(function (data) {
     console.log(data)
@@ -1727,7 +1727,7 @@ angular.module('zy.controllers', ['ionic', 'kidney.services'])
     }).then(function (data) {
       $scope.patients = data.results
       if (data.results.length == 0) {
-                // console.log("aaa")
+        // console.log("aaa")
         $ionicLoading.show({ template: '没有搜索到患者', duration: 1000 })
       }
     }, function (err) {
@@ -2449,7 +2449,7 @@ angular.module('zy.controllers', ['ionic', 'kidney.services'])
 }])
 
 // "我”页-zy,mzb,zxf
-.controller('meCtrl', ['$ionicActionSheet', 'CONFIG', 'Camera', 'Doctor', '$scope', '$state', 'Storage', '$ionicPopover', '$http', '$ionicPopup', 'User', '$location', '$timeout', function ($ionicActionSheet, CONFIG, Camera, Doctor, $scope, $state, Storage, $ionicPopover, $http, $ionicPopup, User, $location, $timeout) {
+.controller('meCtrl', ['$ionicActionSheet', 'CONFIG', 'Camera', 'Doctor', '$scope', '$state', 'Storage', '$ionicPopover', '$http', '$ionicPopup', 'User', '$location', '$timeout', 'Mywechat', function ($ionicActionSheet, CONFIG, Camera, Doctor, $scope, $state, Storage, $ionicPopover, $http, $ionicPopup, User, $location, $timeout, Mywechat) {
   $scope.barwidth = 'width:0%'
     // $scope.$on('$ionicView.beforeEnter', function() {
     //     $scope.doRefresh();
@@ -4628,7 +4628,9 @@ angular.module('zy.controllers', ['ionic', 'kidney.services'])
         if (data.results.autoRelay) {
           $scope.forwardinginfo.autoRelay = true
           $scope.teams = data.teams
-          $scope.initial.item = data.results.relayTarget[0].teamId
+          if (data.results.relayTarget[0].teamId) {
+            $scope.initial.item = data.results.relayTarget[0].teamId
+          }
           console.log($scope.teams)
         }
       }, function (err) {
@@ -6194,7 +6196,7 @@ angular.module('zy.controllers', ['ionic', 'kidney.services'])
   }
 }])
 
-.controller('postCtrl', ['$scope', '$state', 'Storage', '$ionicPopover', 'Forum', 'Camera', 'CONFIG', '$ionicLoading', '$timeout', '$ionicModal', '$ionicScrollDelegate', function ($scope, $state, Storage, $ionicPopover, Forum, Camera, CONFIG, $ionicLoading, $timeout, $ionicModal, $ionicScrollDelegate) {
+.controller('postCtrl', ['$scope', '$state', 'Storage', '$ionicPopover', 'Forum', 'Camera', 'CONFIG', '$ionicLoading', '$timeout', '$ionicModal', '$ionicScrollDelegate', '$location', 'Mywechat', function ($scope, $state, Storage, $ionicPopover, Forum, Camera, CONFIG, $ionicLoading, $timeout, $ionicModal, $ionicScrollDelegate, $location, Mywechat) {
   $scope.GoBack = function () {
     $state.go('tab.allposts')
   }

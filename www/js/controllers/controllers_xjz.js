@@ -1543,7 +1543,7 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
           }
         }
       }
-      Mywechat.messageTemplate(template)
+     // Mywechat.messageTemplate(template)
     }
     sendmsg($scope.input.text, 'text')
     $scope.input.text = ''
@@ -2663,7 +2663,7 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
                             }
                           }
                         }
-                        Mywechat.messageTemplate(template)
+                        // Mywechat.messageTemplate(template)
                         socket.emit('message', { msg: msgJson, to: PID, role: 'doctor'})
                             // resetUserAsAppUser();
 
@@ -2704,7 +2704,7 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
                             }
                           }
                         }
-                        Mywechat.messageTemplate(template)
+                        // Mywechat.messageTemplate(template)
 
                         Account.modifyCounts({doctorId: DID, patientId: PID, modify: '-1'})
                             .then(function () {
@@ -3274,7 +3274,7 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
                             }
                           }
                         }
-                        Mywechat.messageTemplate(template)
+                        // Mywechat.messageTemplate(template)
                         socket.emit('message', { msg: msgJson, to: PID, role: 'doctor'})
                             // resetUserAsAppUser();
 
@@ -3315,7 +3315,7 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
                             }
                           }
                         }
-                        Mywechat.messageTemplate(template)
+                        // Mywechat.messageTemplate(template)
 
                         Account.modifyCounts({doctorId: DID, patientId: PID, modify: '-1'})
                             .then(function () {
