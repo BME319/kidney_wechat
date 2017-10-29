@@ -129,7 +129,7 @@ angular.module('kidney', [
               var errs = []
 
               if (state.indexOf('qrcode') !== -1) {
-                $state.go('myqrcode')
+                $state.go('tab.QRcode')
               } else if (state.indexOf('newsufferer') !== -1) {
                 $state.go('tab.patient')
               } else if (params.length > 1 && params[0] == 'doctor') {
