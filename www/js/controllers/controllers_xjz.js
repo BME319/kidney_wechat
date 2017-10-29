@@ -1510,40 +1510,40 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
    */
   $scope.submitMsg = function () {
     if ($scope.params.newsType == 11) {
-      var targetRole = 'patient'
-      var actionUrl = 'https://open.weixin.qq.com/connect/oauth2/authorize?appid=wxb830b12dc0fa74e5&redirect_uri=https://media.haihonghospitalmanagement.com/proxy&response_type=code&scope=snsapi_userinfo&state=' + targetRole + '_' + $scope.params.newsType + '_' + $state.params.type + '_' + $scope.params.UID + '_' + $state.params.counselId + '&#wechat_redirect'
+      // var targetRole = 'patient'
+      // var actionUrl = 'https://open.weixin.qq.com/connect/oauth2/authorize?appid=wxb830b12dc0fa74e5&redirect_uri=https://media.haihonghospitalmanagement.com/proxy&response_type=code&scope=snsapi_userinfo&state=' + targetRole + '_' + $scope.params.newsType + '_' + $state.params.type + '_' + $scope.params.UID + '_' + $state.params.counselId + '&#wechat_redirect'
 
-      var template = {
-        'userId': $scope.params.chatId, // 患者的UID
-        'role': 'patient',
-        'postdata': {
-          'template_id': 'N_0kYsmxrQq-tfJhGUo746G8Uem6uHZgK138HIBKI2I',
-          'url': actionUrl,
-          'data': {
-            'first': {
-              'value': '您的' + ($scope.params.counseltype == 1 ? '咨询' : ($scope.params.counseltype == 6 ? '加急咨询' : '问诊')) + $scope.params.counsel.symptom + '已被回复！', // XXX取那个咨询或问诊的标题
-              'color': '#173177'
-            },
-            'keyword1': {
-              'value': $scope.params.counsel.help, // 咨询的问题
-              'color': '#173177'
-            },
-            'keyword2': {
-              'value': $scope.input.text, // 医生的回复
-              'color': '#173177'
-            },
-            'keyword3': {
-              'value': thisDoctor.name, // 回复医生的姓名
-              'color': '#173177'
-            },
-            'remark': {
-              'value': '感谢您的使用！',
-              'color': '#173177'
-            }
-          }
-        }
-      }
-      Mywechat.messageTemplate(template)
+      // var template = {
+      //   'userId': $scope.params.chatId, // 患者的UID
+      //   'role': 'patient',
+      //   'postdata': {
+      //     'template_id': 'N_0kYsmxrQq-tfJhGUo746G8Uem6uHZgK138HIBKI2I',
+      //     'url': actionUrl,
+      //     'data': {
+      //       'first': {
+      //         'value': '您的' + ($scope.params.counseltype == 1 ? '咨询' : ($scope.params.counseltype == 6 ? '加急咨询' : '问诊')) + $scope.params.counsel.symptom + '已被回复！', // XXX取那个咨询或问诊的标题
+      //         'color': '#173177'
+      //       },
+      //       'keyword1': {
+      //         'value': $scope.params.counsel.help, // 咨询的问题
+      //         'color': '#173177'
+      //       },
+      //       'keyword2': {
+      //         'value': $scope.input.text, // 医生的回复
+      //         'color': '#173177'
+      //       },
+      //       'keyword3': {
+      //         'value': thisDoctor.name, // 回复医生的姓名
+      //         'color': '#173177'
+      //       },
+      //       'remark': {
+      //         'value': '感谢您的使用！',
+      //         'color': '#173177'
+      //       }
+      //     }
+      //   }
+      // }
+      // Mywechat.messageTemplate(template)
     }
     sendmsg($scope.input.text, 'text')
     $scope.input.text = ''
@@ -2663,7 +2663,7 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
                             }
                           }
                         }
-                        Mywechat.messageTemplate(template)
+                        // Mywechat.messageTemplate(template)
                         socket.emit('message', { msg: msgJson, to: PID, role: 'doctor'})
                             // resetUserAsAppUser();
 
@@ -2673,7 +2673,7 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
                           $state.go('tab.groups', { type: '0' })
                         }, 1000)
                       } else if (res.results.type == 6 || res.results.type == 7 || res.results.type == 1) {
-                        var actionUrl = 'https://open.weixin.qq.com/connect/oauth2/authorize?appid=wxb830b12dc0fa74e5&redirect_uri=http://proxy.haihonghospitalmanagement.com/go&response_type=code&scope=snsapi_userinfo&state=patient_11_1_' + DID + '_' + res.results.counselId + '&#wechat_redirect'
+                        var actionUrl = 'https://open.weixin.qq.com/connect/oauth2/authorize?appid=wxb830b12dc0fa74e5&redirect_uri=https://media.haihonghospitalmanagement.com/proxy&response_type=code&scope=snsapi_userinfo&state=patient_11_1_' + DID + '_' + res.results.counselId + '&#wechat_redirect'
                         var template = {
                           'userId': PID, // 患者的UID
                           'role': 'patient',
@@ -2704,7 +2704,7 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
                             }
                           }
                         }
-                        Mywechat.messageTemplate(template)
+                        // Mywechat.messageTemplate(template)
 
                         Account.modifyCounts({doctorId: DID, patientId: PID, modify: '-1'})
                             .then(function () {
@@ -3274,7 +3274,7 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
                             }
                           }
                         }
-                        Mywechat.messageTemplate(template)
+                        // Mywechat.messageTemplate(template)
                         socket.emit('message', { msg: msgJson, to: PID, role: 'doctor'})
                             // resetUserAsAppUser();
 
@@ -3315,7 +3315,7 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
                             }
                           }
                         }
-                        Mywechat.messageTemplate(template)
+                        // Mywechat.messageTemplate(template)
 
                         Account.modifyCounts({doctorId: DID, patientId: PID, modify: '-1'})
                             .then(function () {
