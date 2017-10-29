@@ -1350,7 +1350,9 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
         msg.diff = false
       }
     }
-    $scope.msgs[pos] = msg
+    $timeout(function () {
+      $scope.msgs[pos] = msg
+    }, 1000)
     // toBottom(true, 1000)
   }
   /**
