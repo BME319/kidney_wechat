@@ -2350,7 +2350,7 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
    */
   $scope.updateMsg = function (msg, pos) {
     console.info('updateMsg')
-    if (msg.contentType == 'image') msg.content.thumb = CONFIG.mediaUrl + msg.content['src_thumb']
+    // if (msg.contentType == 'image') msg.content.thumb = CONFIG.mediaUrl + msg.content['src_thumb']
     msg.direct = msg.fromID == $scope.params.UID ? 'send' : 'receive'
     if (pos == 0) {
       msg.diff = true
