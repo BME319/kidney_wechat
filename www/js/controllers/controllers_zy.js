@@ -1727,7 +1727,7 @@ angular.module('zy.controllers', ['ionic', 'kidney.services'])
     }).then(function (data) {
       $scope.patients = data.results
       if (data.results.length == 0) {
-                // console.log("aaa")
+        // console.log("aaa")
         $ionicLoading.show({ template: '没有搜索到患者', duration: 1000 })
       }
     }, function (err) {
@@ -4628,7 +4628,9 @@ angular.module('zy.controllers', ['ionic', 'kidney.services'])
         if (data.results.autoRelay) {
           $scope.forwardinginfo.autoRelay = true
           $scope.teams = data.teams
-          $scope.initial.item = data.results.relayTarget[0].teamId
+          if (data.results.relayTarget[0].teamId) {
+            $scope.initial.item = data.results.relayTarget[0].teamId
+          }
           console.log($scope.teams)
         }
       }, function (err) {
