@@ -994,7 +994,7 @@ angular.module('zy.controllers', ['ionic', 'kidney.services'])
 }])
 
 // 上传资质证书-zxf
-.controller('uploadcertificateCtrl', ['CONFIG', 'Dict', 'Doctor', '$scope', '$state', '$timeout', 'Storage', '$ionicPopup', '$ionicLoading', '$ionicPopover', '$ionicScrollDelegate', 'User', 'Camera', '$ionicModal', '$stateParams', 'socket', 'mySocket', function (CONFIG, Dict, Doctor, $scope, $state, $timeout, Storage, $ionicPopup, $ionicLoading, $ionicPopover, $ionicScrollDelegate, User, Camera, $ionicModal, $stateParams, socket, mySocket) {
+.controller('uploadcertificateCtrl', ['CONFIG', 'Dict', 'Doctor', '$scope', '$state', '$timeout', 'Storage', '$ionicPopup', '$ionicLoading', '$ionicPopover', '$ionicScrollDelegate', 'User', 'Camera', '$ionicModal', '$stateParams', 'socket', 'mySocket', 'Mywechat', '$location', function (CONFIG, Dict, Doctor, $scope, $state, $timeout, Storage, $ionicPopup, $ionicLoading, $ionicPopover, $ionicScrollDelegate, User, Camera, $ionicModal, $stateParams, socket, mySocket, Mywechat, $location) {
   $scope.doctor = {}
   User.logIn({username: Storage.get('phoneNumber'), password: Storage.get('password'), role: 'doctor'}).then(function (data) {
     console.log(data)
@@ -2449,7 +2449,7 @@ angular.module('zy.controllers', ['ionic', 'kidney.services'])
 }])
 
 // "我”页-zy,mzb,zxf
-.controller('meCtrl', ['$ionicActionSheet', 'CONFIG', 'Camera', 'Doctor', '$scope', '$state', 'Storage', '$ionicPopover', '$http', '$ionicPopup', 'User', '$location', '$timeout', function ($ionicActionSheet, CONFIG, Camera, Doctor, $scope, $state, Storage, $ionicPopover, $http, $ionicPopup, User, $location, $timeout) {
+.controller('meCtrl', ['$ionicActionSheet', 'CONFIG', 'Camera', 'Doctor', '$scope', '$state', 'Storage', '$ionicPopover', '$http', '$ionicPopup', 'User', '$location', '$timeout', 'Mywechat', function ($ionicActionSheet, CONFIG, Camera, Doctor, $scope, $state, Storage, $ionicPopover, $http, $ionicPopup, User, $location, $timeout, Mywechat) {
   $scope.barwidth = 'width:0%'
     // $scope.$on('$ionicView.beforeEnter', function() {
     //     $scope.doRefresh();
@@ -6194,7 +6194,7 @@ angular.module('zy.controllers', ['ionic', 'kidney.services'])
   }
 }])
 
-.controller('postCtrl', ['$scope', '$state', 'Storage', '$ionicPopover', 'Forum', 'Camera', 'CONFIG', '$ionicLoading', '$timeout', '$ionicModal', '$ionicScrollDelegate', function ($scope, $state, Storage, $ionicPopover, Forum, Camera, CONFIG, $ionicLoading, $timeout, $ionicModal, $ionicScrollDelegate) {
+.controller('postCtrl', ['$scope', '$state', 'Storage', '$ionicPopover', 'Forum', 'Camera', 'CONFIG', '$ionicLoading', '$timeout', '$ionicModal', '$ionicScrollDelegate', '$location', 'Mywechat',function ($scope, $state, Storage, $ionicPopover, Forum, Camera, CONFIG, $ionicLoading, $timeout, $ionicModal, $ionicScrollDelegate, $location, Mywechat) {
   $scope.GoBack = function () {
     $state.go('tab.allposts')
   }
