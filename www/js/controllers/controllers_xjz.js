@@ -2350,6 +2350,8 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
    */
   $scope.updateMsg = function (msg, pos) {
     console.info('updateMsg')
+    console.log(msg.content.thumb)
+    console.log(msg.content['src_thumb'])
     // if (msg.contentType == 'image') msg.content.thumb = CONFIG.mediaUrl + msg.content['src_thumb']
     msg.direct = msg.fromID == $scope.params.UID ? 'send' : 'receive'
     if (pos == 0) {
@@ -2357,7 +2359,10 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
     } else if (msg.hasOwnProperty('time') && $scope.msgs[pos - 1].hasOwnProperty('time')) {
       msg.diff = (msg.time - $scope.msgs[pos - 1].time) > 300000
     }
-    $scope.msgs[pos] = msg
+    $scope.$apply(function () {
+      $scope.msgs[pos] = msg
+    })
+
     // toBottom(true, 1000)
   }
   $scope.pushMsg = function (msg) {
