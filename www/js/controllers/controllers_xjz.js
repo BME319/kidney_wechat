@@ -1658,7 +1658,7 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
     $ionicHistory.nextViewOptions({
       disableBack: true
     })
-    if ($ionicHistory.backView().title) {
+    if ($ionicHistory.backView()) {
       if ($ionicHistory.backView().title == '消息中心')$ionicHistory.goBack()
     } else {
       if ($state.params.type == '1') $state.go('tab.doing')
