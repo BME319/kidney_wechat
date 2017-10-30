@@ -1,6 +1,6 @@
 angular.module('zy.controllers', ['ionic', 'kidney.services'])
 // 登录-zy,zxf
-.controller('SignInCtrl', ['$ionicLoading', 'User', '$scope', '$timeout', '$state', 'Storage', '$ionicHistory', '$sce', 'Doctor', 'Patient', 'notify', 'socket', 'Mywechat', 'mySocket', function ($ionicLoading, User, $scope, $timeout, $state, Storage, $ionicHistory, $sce, Doctor, Patient, notify, socket, Mywechat, mySocket) {
+.controller('SignInCtrl', ['$ionicLoading', 'User', '$scope', '$timeout', '$state', 'Storage', '$ionicHistory', '$sce', 'Doctor', 'Patient', 'notify', 'socket', 'Mywechat', 'mySocket', '$ionicPopup', function ($ionicLoading, User, $scope, $timeout, $state, Storage, $ionicHistory, $sce, Doctor, Patient, notify, socket, Mywechat, mySocket, $ionicPopup) {
   $scope.barwidth = 'width:0%'
   // $scope.navigation_login = $sce.trustAsResourceUrl('http://proxy.haihonghospitalmanagement.com/member.php?mod=logging&action=logout&formhash=xxxxxx')
   if (Storage.get('USERNAME') != null && Storage.get('USERNAME') != undefined) {

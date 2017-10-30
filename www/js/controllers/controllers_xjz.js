@@ -1658,12 +1658,12 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
     $ionicHistory.nextViewOptions({
       disableBack: true
     })
-    if ($ionicHistory.backView().title == '消息中心')$ionicHistory.goBack()
-    else {
-      if ($state.params.type == '1') $state.go('tab.doing')
-      else if ($state.params.type == '0') $state.go('tab.did')
-      else $state.go('tab.groups', { type: '1' })
+    if ($ionicHistory.backView()) {
+      if ($ionicHistory.backView().title == '消息中心')$ionicHistory.goBack()
     }
+    if ($state.params.type == '1') $state.go('tab.doing')
+    else if ($state.params.type == '0') $state.go('tab.did')
+    else $state.go('tab.groups', { type: '1' })
   }
 }])
 /**
@@ -3026,7 +3026,7 @@ angular.module('xjz.controllers', ['ionic', 'kidney.services'])
  * @DateTime 2017-07-05
  * 20170904 与回复界面合并 zyh
  */
-.controller('viewChatCtrl', ['$scope', '$state', '$ionicModal', '$ionicScrollDelegate', '$ionicHistory', '$ionicLoading', 'voice', 'CONFIG', 'Communication', 'Doctor', 'Patient2', '$q', 'Storage', 'Account', 'socket', 'mySocket', 'Counsel', 'Mywechat', 'arrTool', function ($scope, $state, $ionicModal, $ionicScrollDelegate, $ionicHistory, $ionicLoading, voice, CONFIG, Communication, Doctor, Patient2, $q, Storage, Account, socket, mySocket, Counsel, Mywechat, arrTool) {
+.controller('viewChatCtrl', ['$scope', '$state', '$ionicModal', '$ionicScrollDelegate', '$ionicHistory', '$ionicLoading', 'voice', 'CONFIG', 'Communication', 'Doctor', 'Patient2', '$q', 'Storage', 'Account', 'socket', 'mySocket', 'Counsel', 'Mywechat', 'arrTool', '$timeout', function ($scope, $state, $ionicModal, $ionicScrollDelegate, $ionicHistory, $ionicLoading, voice, CONFIG, Communication, Doctor, Patient2, $q, Storage, Account, socket, mySocket, Counsel, Mywechat, arrTool, $timeout) {
   $scope.photoUrls = {}
   $scope.input = {
     text: ''
