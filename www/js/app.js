@@ -1260,7 +1260,7 @@ angular.module('kidney', [
   $scope.destroy = function () {
     // console.log('destroy')
     if (Storage.get('reviewStatus') == 1) {
-      if (RefreshUnread) {
+      if (RefreshUnread!==undefined  && RefreshUnread) {
         $interval.cancel(RefreshUnread)
       }
     }
