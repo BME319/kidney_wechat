@@ -222,6 +222,28 @@ angular.module('kidney', [
         } else {
           $state.go('signin')
         }
+        if (!Storage.get('docWechatPop')) {
+          $ionicPopup.show({
+            template: '我们的软件更新啦，点击查看新版本功能！',
+            title: '软件更新',
+            // scope: $scope,
+            buttons: [
+              {
+                text: '取消',
+                type: 'button-small',
+                onTap: function (e) {}
+              },
+              {
+                text: '确定',
+                type: 'button-small button-positive ',
+                onTap: function (e) {
+                  window.open(encodeURI('http://mp.weixin.qq.com/s/pFtJUhQadc2ZJT8os1cVUA'))
+                }
+              }
+            ]
+          })
+          Storage.set('docWechatPop', true)
+        }        
       }, function (err) {
         console.log(err)
         $state.go('signin')
