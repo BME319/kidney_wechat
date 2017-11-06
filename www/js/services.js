@@ -46,11 +46,11 @@ angular.module('kidney.services', ['ionic', 'ngResource'])
 }])
 .constant('CONFIG', {
   // baseUrl: 'http://121.43.107.106:4060/api/v1/',
-  baseTwoUrl: 'https://application.haihonghospitalmanagement.com/api/v2/',
-  mediaUrl: 'https://media.haihonghospitalmanagement.com/',
-  socketServer: 'https://application.haihonghospitalmanagement.com/',
-  imgThumbUrl: 'https://media.haihonghospitalmanagement.com/uploads/photos/resize',
-  imgLargeUrl: 'https://media.haihonghospitalmanagement.com/uploads/photos/',
+  baseTwoUrl: 'https://docker2.haihonghospitalmanagement.com/api/v2/',
+  mediaUrl: 'https://df2.haihonghospitalmanagement.com/',
+  socketServer: 'https://docker2.haihonghospitalmanagement.com/',
+  imgThumbUrl: 'https://df2.haihonghospitalmanagement.com/uploads/photos/resize',
+  imgLargeUrl: 'https://df2.haihonghospitalmanagement.com/uploads/photos/',
   cameraOptions: {
     cam: {
       quality: 70,
